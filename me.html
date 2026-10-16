@@ -8,13 +8,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-  /* Layout: one column for a phone or desk — my summary, my trainings by urgency; the quiz replaces the list while it's open */
+  /* Layout: one column for phone or desk — my trainings by urgency; opening one shows its Notion lesson, then the quiz or confirmation */
   :root {
     --bg: #f4f5f2; --surface: #ffffff; --surface-2: #eef0ec; --fg: #1b231f; --muted: #5d6963; --line: #dde2dd;
     --accent: #2c6a52; --accent-ink: #ffffff;
     --ok: #3d8a63; --ok-soft: #e1f0e7; --soon: #b07a23; --soon-soft: #f7ecd6;
     --late: #b5443d; --late-soft: #f8e3e1; --miss: #74559f; --miss-soft: #ece5f5;
-    --retake: #2f6fae; --retake-soft: #e2ecf8;
+    --retake: #2f6fae; --retake-soft: #e2ecf8; --update: #b0447a; --update-soft: #f8e2ee;
+    --n-blue: #2f6fae; --n-blue-bg: #e7f0f9; --n-yellow-bg: #fbf3db; --n-red-bg: #fbe8e6; --n-green-bg: #e6f2ea; --n-purple-bg: #f0eaf8; --n-pink-bg: #f9e8f1; --n-orange-bg: #fbeee0; --n-brown-bg: #f2ebe4;
     --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
     --body: "Figtree", "Segoe UI", system-ui, sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
@@ -25,20 +26,22 @@
       --accent: #6cbf98; --accent-ink: #0f1a15;
       --ok: #6cc595; --ok-soft: #1c3227; --soon: #e0b062; --soon-soft: #362b17;
       --late: #ec8a82; --late-soft: #3a1f1d; --miss: #b49ae0; --miss-soft: #2b2338;
-      --retake: #8ab8ec; --retake-soft: #1b2a3d;
+      --retake: #8ab8ec; --retake-soft: #1b2a3d; --update: #ee9cc6; --update-soft: #3a1f2e;
+      --n-blue: #8ab8ec; --n-blue-bg: #1b2a3d; --n-yellow-bg: #362f17; --n-red-bg: #3a1f1d; --n-green-bg: #1c3227; --n-purple-bg: #2b2338; --n-pink-bg: #3a1f2e; --n-orange-bg: #3a2a19; --n-brown-bg: #2f2822;
       color-scheme: dark;
     }
   }
   * { box-sizing: border-box; }
   body {
-    margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 var(--body);
+    margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--body);
     padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
     padding-block: max(24px, env(safe-area-inset-top, 0px)) 56px;
   }
-  .wrap { max-width: 720px; margin: 0 auto; display: grid; gap: 18px; }
+  .wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 18px; }
   button, input { font: inherit; color: inherit; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   [hidden] { display: none !important; }
+  a { color: var(--accent); }
 
   .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
   h1 { font: 600 clamp(26px, 6vw, 34px)/1.1 var(--display); margin: 2px 0 0; text-wrap: balance; }
@@ -51,27 +54,71 @@
   .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 2px; }
   .stat b { font: 600 30px/1 var(--display); font-variant-numeric: tabular-nums; }
   .stat span { color: var(--muted); font-size: 13px; }
-  .stat.todo b { color: var(--soon); } .stat.retake b { color: var(--retake); } .stat.ok b { color: var(--ok); }
+  .stat.todo b { color: var(--soon); } .stat.wait b { color: var(--retake); } .stat.ok b { color: var(--ok); }
   @media (max-width: 420px) { .stat b { font-size: 24px; } .stat { padding: 12px; } }
 
   .list { display: grid; gap: 10px; }
   .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; }
-  .card.k-retake { border-color: var(--retake); }
-  .card.k-late { border-color: var(--late); }
+  .card.k-retake { border-color: var(--retake); } .card.k-late { border-color: var(--late); } .card.k-update { border-color: var(--update); }
   .row1 { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
   .name { font: 600 17px/1.3 var(--display); overflow-wrap: anywhere; }
   .meta { font: 13px/1.5 var(--mono); color: var(--muted); }
   .pill { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
-  .pill.k-ok { color: var(--ok); background: var(--ok-soft); } .pill.k-soon { color: var(--soon); background: var(--soon-soft); }
-  .pill.k-late { color: var(--late); background: var(--late-soft); } .pill.k-missing { color: var(--miss); background: var(--miss-soft); }
-  .pill.k-retake { color: var(--retake); background: var(--retake-soft); }
-  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .k-ok.pill { color: var(--ok); background: var(--ok-soft); } .k-soon.pill { color: var(--soon); background: var(--soon-soft); }
+  .k-late.pill { color: var(--late); background: var(--late-soft); } .k-missing.pill { color: var(--miss); background: var(--miss-soft); }
+  .k-retake.pill { color: var(--retake); background: var(--retake-soft); } .k-update.pill { color: var(--update); background: var(--update-soft); }
+  .k-signoff.pill { color: var(--ok); background: transparent; box-shadow: inset 0 0 0 1.5px var(--ok); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 9px 14px; font-weight: 600; cursor: pointer; text-decoration: none; color: var(--fg); font-size: 15px; }
   .btn:hover { border-color: var(--accent); }
   .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-  .btn[disabled] { opacity: .6; cursor: progress; }
+  .btn[disabled] { opacity: .55; cursor: not-allowed; }
   .note { color: var(--muted); font-size: 14px; }
 
+  /* lesson */
+  .lesson-head { display: grid; gap: 8px; }
+  .lesson-head h2 { font: 600 clamp(24px, 5vw, 30px)/1.15 var(--display); margin: 0; text-wrap: balance; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+  .progress { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 8px; }
+  .progress .top { display: flex; justify-content: space-between; font-weight: 600; font-size: 14px; }
+  .bar { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s; }
+  .doc { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 10px; min-width: 0; }
+  .doc > *, .doc .callout > *, .doc .col > * { margin: 0; min-width: 0; }
+  .doc h2, .doc h3, .doc h4 { font-family: var(--display); font-weight: 600; line-height: 1.25; text-wrap: balance; }
+  .doc h2 { font-size: 22px; } .doc h3 { font-size: 18px; } .doc h4 { font-size: 16px; }
+  .doc p { overflow-wrap: anywhere; }
+  .doc ul, .doc ol { padding-left: 1.3em; display: grid; gap: 4px; }
+  .doc hr { border: 0; border-top: 1px solid var(--line); width: 100%; }
+  .doc code { font: 14px var(--mono); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+  .doc img { max-width: 100%; border-radius: 8px; }
+  .doc blockquote { border-left: 3px solid var(--line); padding-left: 12px; color: var(--muted); }
+  .callout { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; padding: 14px 16px; border-radius: 10px; background: var(--surface-2); }
+  .callout.noicon { grid-template-columns: minmax(0, 1fr); }
+  .callout .ic { font-size: 18px; line-height: 1.5; }
+  .callout .body { display: grid; gap: 8px; min-width: 0; }
+  .callout .body > * { margin: 0; }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .col { display: grid; gap: 8px; align-content: start; min-width: 0; }
+  .todo { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; background: var(--surface); cursor: pointer; }
+  .callout .todo { background: var(--bg); }
+  .todo input { margin-top: 5px; accent-color: var(--accent); flex: none; width: 17px; height: 17px; }
+  .todo:has(input:checked) span { color: var(--muted); }
+  details summary { cursor: pointer; font-weight: 600; }
+  .linkout { display: inline-flex; gap: 6px; align-items: center; }
+  .bg-gray_bg, .bg-default { background: var(--surface-2); } .bg-blue_bg { background: var(--n-blue-bg); } .bg-yellow_bg { background: var(--n-yellow-bg); }
+  .bg-red_bg { background: var(--n-red-bg); } .bg-green_bg { background: var(--n-green-bg); } .bg-purple_bg { background: var(--n-purple-bg); }
+  .bg-pink_bg { background: var(--n-pink-bg); } .bg-orange_bg { background: var(--n-orange-bg); } .bg-brown_bg { background: var(--n-brown-bg); }
+  .c-green { color: var(--ok); } .c-blue { color: var(--n-blue); } .c-red { color: var(--late); } .c-orange, .c-yellow { color: var(--soon); }
+  .c-purple { color: var(--miss); } .c-pink { color: var(--update); } .c-gray, .c-brown { color: var(--muted); }
+
+  .finish { background: var(--surface); border: 2px solid var(--accent); border-radius: 12px; padding: 18px; display: grid; gap: 12px; }
+  .finish h3 { font: 600 19px/1.25 var(--display); margin: 0; }
+  .confirm-box { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 8px; background: var(--surface-2); cursor: pointer; font-weight: 500; }
+  .confirm-box input { margin-top: 5px; accent-color: var(--accent); width: 18px; height: 18px; flex: none; }
+
+  /* quiz */
   .quiz { display: grid; gap: 16px; }
   .quiz h2 { font: 600 24px/1.2 var(--display); margin: 0; text-wrap: balance; }
   fieldset { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 16px; margin: 0; display: grid; gap: 8px; min-width: 0; }
@@ -108,56 +155,53 @@
   <section id="home">
     <div class="stats" aria-label="Summary">
       <div class="stat todo"><b id="nTodo">–</b><span>To do</span></div>
-      <div class="stat retake"><b id="nRetake">–</b><span>Retake required</span></div>
+      <div class="stat wait"><b id="nWait">–</b><span>Waiting for sign-off</span></div>
       <div class="stat ok"><b id="nDone">–</b><span>Done</span></div>
     </div>
     <div class="list" id="list" style="margin-top:16px"><div class="skeleton"></div><div class="skeleton"></div></div>
   </section>
 
-  <section id="quizView" class="quiz" hidden aria-live="polite"></section>
+  <section id="detail" hidden aria-live="polite"></section>
 </div>
 
 <script>
 const key = new URLSearchParams(location.search).get("key") || "";
 const $ = (id) => document.getElementById(id);
-const LABEL = { missing: "To do", retake: "Retake required", late: "Overdue", soon: "Due soon", ok: "Done" };
-const RANK = { retake: 0, late: 1, missing: 2, soon: 3, ok: 4 };
-let data = null, inQuiz = false;
+const LABEL = { missing: "To do", retake: "Retake required", update: "New version", late: "Overdue", signoff: "Waiting for sign-off", soon: "Due soon", ok: "Done" };
+const RANK = { retake: 0, update: 1, late: 2, missing: 3, soon: 4, signoff: 5, ok: 6 };
+const ACTIONABLE = new Set(["missing", "retake", "update", "late", "soon"]);
+let data = null, away = false;
 
 function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
 function fmt(iso) { if (!iso) return ""; const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); }
 function setFresh(kind, text) { $("dot").className = "dot" + (kind === "ok" ? "" : kind === "warn" ? " warn" : " err"); $("freshText").textContent = text; }
+function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch { return null; } }
 
 function line(t) {
-  if (t.status === "retake") return `Last score ${t.lastScore ?? "–"}% on ${fmt(t.lastDate)} · you need ${t.passMark}% to pass`;
-  if (t.status === "missing") return `Not started · pass mark ${t.passMark}%`;
-  if (t.status === "late") return `Overdue since ${fmt(t.due)} · last done ${fmt(t.done)}`;
+  if (t.status === "retake") return `Last score ${t.lastScore ?? "–"}% · you need ${t.passMark}% to pass`;
+  if (t.status === "update") return `Updated to ${t.version} · please read and confirm again`;
+  if (t.status === "signoff") return `Completed ${fmt(t.done)} · your manager will sign it off`;
+  if (t.status === "missing") return t.completion === "Quiz" ? `Read it, then pass the quiz (${t.passMark}%)` : "Read it, then confirm";
+  if (t.status === "late") return `Overdue since ${fmt(t.due)}`;
   if (t.status === "soon") return `Due ${fmt(t.due)} (in ${t.days} day${t.days === 1 ? "" : "s"})`;
   const score = t.lastScore != null ? ` · scored ${t.lastScore}%` : "";
   return t.due ? `Done ${fmt(t.done)}${score} · next due ${fmt(t.due)}` : `Done ${fmt(t.done)}${score}`;
 }
 
+// ---------- home ----------
 function renderHome() {
   if (!data) return;
-  const first = data.person.name.split(" ")[0];
-  $("hello").textContent = `Hi ${first}`;
+  $("hello").textContent = `Hi ${data.person.name.split(" ")[0]}`;
   $("role").textContent = data.person.role || "";
   const list = [...data.trainings].sort((a, b) => RANK[a.status] - RANK[b.status] || (a.due || "9").localeCompare(b.due || "9") || a.name.localeCompare(b.name));
-  $("nTodo").textContent = list.filter(t => ["missing", "late", "soon"].includes(t.status)).length;
-  $("nRetake").textContent = list.filter(t => t.status === "retake").length;
+  $("nTodo").textContent = list.filter(t => ACTIONABLE.has(t.status)).length;
+  $("nWait").textContent = list.filter(t => t.status === "signoff").length;
   $("nDone").textContent = list.filter(t => t.status === "ok").length;
-
-  $("list").innerHTML = list.length ? list.map(t => {
-    const canQuiz = t.questionCount > 0 && t.status !== "ok";
-    const quizLabel = t.status === "retake" ? "Retake the quiz" : t.attempts ? "Take the quiz again" : "Start the quiz";
-    return `<article class="card k-${t.status}">
+  $("list").innerHTML = list.length ? list.map(t => `
+    <article class="card k-${t.status}">
       <div class="row1"><div><div class="name">${esc(t.name)}</div><div class="meta">${esc(line(t))}</div></div><span class="pill k-${t.status}">${LABEL[t.status]}</span></div>
-      ${(t.material || canQuiz) ? `<div class="actions">
-        ${t.material ? `<a class="btn" href="${esc(t.material)}" target="_blank" rel="noopener">Open the training</a>` : ""}
-        ${canQuiz ? `<button class="btn primary" type="button" data-quiz="${esc(t.id)}">${quizLabel}</button>` : ""}
-      </div>` : (t.status !== "ok" && !t.questionCount ? `<div class="note">This training has no quiz. Your manager records it when it's done.</div>` : "")}
-    </article>`;
-  }).join("") : `<div class="empty">No trainings are assigned to you yet.</div>`;
+      <div class="actions"><button class="btn${ACTIONABLE.has(t.status) ? " primary" : ""}" type="button" data-open="${esc(t.id)}">${ACTIONABLE.has(t.status) ? (t.status === "retake" ? "Review and retake" : "Start the training") : "Open the training"}</button></div>
+    </article>`).join("") : `<div class="empty">No trainings are assigned to you yet.</div>`;
 }
 
 async function loadHome() {
@@ -167,7 +211,7 @@ async function loadHome() {
     const body = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(body.message || "Couldn't load your trainings.");
     data = body;
-    if (!inQuiz) renderHome();
+    if (!away) renderHome();
     setFresh("ok", "Up to date · " + new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }));
   } catch (e) {
     if (data) setFresh("err", "Couldn't refresh · " + e.message);
@@ -175,22 +219,156 @@ async function loadHome() {
   }
 }
 
+function showDetail(html) { away = true; $("home").hidden = true; const d = $("detail"); d.hidden = false; d.innerHTML = html; window.scrollTo(0, 0); }
+function goHome() { away = false; $("detail").hidden = true; $("detail").innerHTML = ""; $("home").hidden = false; renderHome(); loadHome(); }
+const backBtn = `<div><button class="btn" type="button" data-back>← Back to my trainings</button></div>`;
+
+// ---------- lesson rendering (Notion blocks) ----------
+function rt(arr) {
+  return (arr || []).map(t => {
+    let h = esc(t.text).replace(/\n/g, "<br>");
+    if (t.code) h = `<code>${h}</code>`;
+    if (t.b) h = `<strong>${h}</strong>`;
+    if (t.i) h = `<em>${h}</em>`;
+    if (t.s) h = `<s>${h}</s>`;
+    if (t.u) h = `<u>${h}</u>`;
+    if (t.color && !t.color.endsWith("_background")) h = `<span class="c-${esc(t.color)}">${h}</span>`;
+    if (t.href) h = `<a href="${esc(t.href)}" target="_blank" rel="noopener">${h}</a>`;
+    return h;
+  }).join("");
+}
+let todoCount = 0;
+function blocks(list) {
+  let out = "", i = 0;
+  while (i < list.length) {
+    const b = list[i];
+    if (b.type === "bulleted_list_item" || b.type === "numbered_list_item") {
+      const tag = b.type === "bulleted_list_item" ? "ul" : "ol";
+      out += `<${tag}>`;
+      while (i < list.length && list[i].type === b.type) { out += `<li>${rt(list[i].text)}${list[i].children ? blocks(list[i].children) : ""}</li>`; i++; }
+      out += `</${tag}>`;
+      continue;
+    }
+    out += block(b); i++;
+  }
+  return out;
+}
+function block(b) {
+  const kids = b.children ? blocks(b.children) : "";
+  switch (b.type) {
+    case "paragraph": return b.text && b.text.length ? `<p>${rt(b.text)}</p>${kids}` : "";
+    case "heading_1": return `<h2>${rt(b.text)}</h2>`;
+    case "heading_2": return `<h3>${rt(b.text)}</h3>`;
+    case "heading_3": return `<h4>${rt(b.text)}</h4>`;
+    case "divider": return "<hr>";
+    case "quote": return `<blockquote>${rt(b.text)}${kids}</blockquote>`;
+    case "to_do": { const n = todoCount++; return `<label class="todo"><input type="checkbox" data-todo="${n}"><span>${rt(b.text)}</span></label>${kids}`; }
+    case "toggle": return `<details><summary>${rt(b.text)}</summary>${kids}</details>`;
+    case "callout": {
+      const bg = /_background$/.test(b.color || "") ? b.color.replace("_background", "_bg") : (b.color || "default");
+      const icon = b.icon ? `<span class="ic" aria-hidden="true">${esc(b.icon)}</span>` : "";
+      return `<div class="callout bg-${esc(bg)}${icon ? "" : " noicon"}">${icon}<div class="body">${b.text && b.text.length ? `<p>${rt(b.text)}</p>` : ""}${kids}</div></div>`;
+    }
+    case "column_list": return `<div class="cols">${(b.children || []).map(c => `<div class="col">${c.children ? blocks(c.children) : ""}</div>`).join("")}</div>`;
+    case "image": return b.src && /^https:\/\//.test(b.src) ? `<figure style="margin:0"><img src="${esc(b.src)}" alt="${esc((b.caption || []).map(c => c.text).join(""))}">${b.caption && b.caption.length ? `<figcaption class="note">${rt(b.caption)}</figcaption>` : ""}</figure>` : "";
+    case "bookmark": case "embed": case "video": case "pdf": case "file": case "link_preview":
+      return b.href && /^https:\/\//.test(b.href) ? `<p><a class="linkout" href="${esc(b.href)}" target="_blank" rel="noopener">${b.caption && b.caption.length ? rt(b.caption) : (b.type === "video" ? "Watch the video" : b.type === "pdf" || b.type === "file" ? "Open the document" : esc(b.href))} ↗</a></p>` : "";
+    default: return kids;
+  }
+}
+
+async function openLesson(id) {
+  showDetail(`${backBtn}<div class="skeleton"></div>`);
+  try {
+    const r = await fetch(`/api/me?key=${encodeURIComponent(key)}&lesson=${encodeURIComponent(id)}`, { cache: "no-store" });
+    const L = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(L.message || "Couldn't open this training.");
+    const t = L.training;
+    todoCount = 0;
+    const body = blocks(L.blocks || []);
+    const chips = [
+      t.completion === "Quiz" ? `Quiz · pass ${t.passMark}%` : "Read & confirm",
+      t.needsSignoff ? "Manager sign-off" : null,
+      t.frequency > 0 ? (t.frequency % 12 === 0 ? `Every ${t.frequency / 12 === 1 ? "year" : t.frequency / 12 + " years"}` : `Every ${t.frequency} months`) : "One-time",
+      t.version ? t.version : null,
+    ].filter(Boolean);
+    showDetail(`${backBtn}
+      <div class="lesson-head">
+        <div class="eyebrow">${esc(t.category || "Training")}</div>
+        <h2>${esc(t.name)}</h2>
+        <div class="chips">${chips.map(c => `<span class="chip">${esc(c)}</span>`).join("")}<span class="pill k-${t.status}">${LABEL[t.status]}</span></div>
+      </div>
+      ${todoCount ? `<div class="progress"><div class="top"><span>Your progress through this page</span><span id="pct">0%</span></div><div class="bar"><i id="barFill"></i></div><div class="note">Ticks are saved on this device only. They help you keep your place.</div></div>` : ""}
+      <article class="doc">${body || `<p class="note">There's no written lesson for this training yet.</p>`}
+        ${t.material ? `<p><a class="btn" href="${esc(t.material)}" target="_blank" rel="noopener">Open the document ↗</a></p>` : ""}
+      </article>
+      ${finishHtml(t)}`);
+    wireTodos(t.id);
+    const cb = $("readCheck"); if (cb) cb.addEventListener("change", () => { $("confirmBtn").disabled = !cb.checked; });
+  } catch (e) {
+    showDetail(`${backBtn}<div class="empty">${esc(e.message)}</div>`);
+  }
+}
+
+function finishHtml(t) {
+  if (t.status === "ok") return `<div class="finish"><h3>You've completed this training</h3><div class="note">${esc(line(t))}</div></div>`;
+  if (t.status === "signoff") return `<div class="finish"><h3>Waiting for your manager's sign-off</h3><div class="note">You completed this on ${fmt(t.done)}. Your manager signs it off once they've seen you do it.</div></div>`;
+  if (t.completion === "Quiz") {
+    if (!t.questionCount) return `<div class="finish"><h3>The quiz isn't ready yet</h3><div class="note">Your manager is adding the questions. Come back to this training later.</div></div>`;
+    return `<div class="finish"><h3>${t.status === "retake" ? "Ready to try the quiz again?" : "Take the quiz"}</h3>
+      <div class="note">${t.questionCount} question${t.questionCount === 1 ? "" : "s"} · you need ${t.passMark}% to pass · unlimited attempts${t.needsSignoff ? " · then your manager signs it off" : ""}</div>
+      <div class="actions"><button class="btn primary" type="button" data-quiz="${esc(t.id)}">${t.status === "retake" ? "Retake the quiz" : "Start the quiz"}</button></div></div>`;
+  }
+  return `<div class="finish"><h3>${t.status === "update" ? "Confirm the new version" : "Confirm you've read it"}</h3>
+    <label class="confirm-box" for="readCheck"><input type="checkbox" id="readCheck"><span>I have read and understood this training${t.version ? ` (${esc(t.version)})` : ""}.</span></label>
+    ${t.needsSignoff ? `<div class="note">After you confirm, your manager signs it off once they've seen you do it.</div>` : ""}
+    <div class="err" id="confirmErr" role="alert"></div>
+    <div class="actions"><button class="btn primary" type="button" id="confirmBtn" data-confirm="${esc(t.id)}" disabled>Confirm</button></div></div>`;
+}
+
+function wireTodos(trainingId) {
+  const boxes = [...document.querySelectorAll("[data-todo]")];
+  if (!boxes.length) return;
+  const k = `todo:${key}:${trainingId}`;
+  const saved = store(k) || {};
+  boxes.forEach(b => { b.checked = !!saved[b.dataset.todo]; });
+  const update = () => {
+    const done = boxes.filter(b => b.checked).length, pct = Math.round(done / boxes.length * 100);
+    $("pct").textContent = pct + "%"; $("barFill").style.width = pct + "%";
+  };
+  boxes.forEach(b => b.addEventListener("change", () => { const s = store(k) || {}; s[b.dataset.todo] = b.checked; store(k, s); update(); }));
+  update();
+}
+
+async function confirmRead(id) {
+  const btn = $("confirmBtn"); btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    const r = await fetch("/api/me", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, trainingId: id, action: "confirm" }) });
+    const res = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(res.message || "Your confirmation couldn't be saved.");
+    showDetail(`<div class="result pass"><div class="eyebrow">Confirmed</div>
+      <h2>${res.needsSignoff ? "Thanks. Your manager will sign this off next." : "Thanks. This training is done."}</h2>
+      <div class="note">${res.needsSignoff ? "It shows as Waiting for sign-off until your manager has seen you do it." : "Your confirmation has been saved."}</div>
+      <div class="actions"><button class="btn primary" type="button" data-back>Back to my trainings</button></div></div>`);
+    loadHome();
+  } catch (e) {
+    $("confirmErr").textContent = e.message + " Please try again.";
+    btn.disabled = false; btn.textContent = "Confirm";
+  }
+}
+
 // ---------- quiz ----------
 async function openQuiz(trainingId) {
-  inQuiz = true;
-  $("home").hidden = true;
-  const v = $("quizView"); v.hidden = false;
-  v.innerHTML = `<div class="skeleton"></div>`;
-  window.scrollTo(0, 0);
+  showDetail(`<div class="skeleton"></div>`);
   try {
     const r = await fetch(`/api/me?key=${encodeURIComponent(key)}&quiz=${encodeURIComponent(trainingId)}`, { cache: "no-store" });
     const q = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(q.message || "Couldn't load the quiz.");
     if (!q.questions.length) throw new Error("This training has no quiz questions yet.");
-    v.innerHTML = `
-      <div><button class="btn" type="button" data-back>← Back to my trainings</button></div>
-      <div><div class="eyebrow">Quiz</div><h2>${esc(q.training.name)}</h2>
-        <div class="note">${q.questions.length} question${q.questions.length === 1 ? "" : "s"} · you need ${q.training.passMark}% to pass${q.training.material ? ` · <a href="${esc(q.training.material)}" target="_blank" rel="noopener">open the training first</a>` : ""}</div></div>
+    showDetail(`
+      <div><button class="btn" type="button" data-open="${esc(q.training.id)}">← Back to the training</button></div>
+      <div class="quiz"><div><div class="eyebrow">Quiz</div><h2>${esc(q.training.name)}</h2>
+        <div class="note">${q.questions.length} question${q.questions.length === 1 ? "" : "s"} · you need ${q.training.passMark}% to pass</div></div>
       <form id="quizForm" class="quiz" novalidate>
         ${q.questions.map((qq, i) => `<fieldset id="fs-${esc(qq.id)}">
           <legend><span class="qnum">Question ${i + 1} of ${q.questions.length}</span>${esc(qq.text)}</legend>
@@ -198,17 +376,16 @@ async function openQuiz(trainingId) {
         </fieldset>`).join("")}
         <div class="err" id="quizErr" role="alert"></div>
         <div class="actions"><button class="btn primary" type="submit" id="submitBtn">Submit answers</button></div>
-      </form>`;
+      </form></div>`);
     $("quizForm").addEventListener("submit", (e) => { e.preventDefault(); submitQuiz(q); });
     $("quizForm").addEventListener("change", (e) => { const fs = e.target.closest("fieldset"); if (fs) fs.classList.remove("missing"); $("quizErr").textContent = ""; });
   } catch (e) {
-    v.innerHTML = `<div><button class="btn" type="button" data-back>← Back to my trainings</button></div><div class="empty">${esc(e.message)}</div>`;
+    showDetail(`${backBtn}<div class="empty">${esc(e.message)}</div>`);
   }
 }
 
 async function submitQuiz(q) {
-  const answers = {};
-  let firstMissing = null;
+  const answers = {}; let firstMissing = null;
   for (const qq of q.questions) {
     const picked = document.querySelector(`input[name="${CSS.escape(qq.id)}"]:checked`);
     const fs = document.getElementById("fs-" + qq.id);
@@ -222,44 +399,37 @@ async function submitQuiz(q) {
   }
   const btn = $("submitBtn"); btn.disabled = true; btn.textContent = "Marking…";
   try {
-    const r = await fetch("/api/me", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, trainingId: q.training.id, answers }) });
+    const r = await fetch("/api/me", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, trainingId: q.training.id, action: "quiz", answers }) });
     const res = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(res.message || "Your answers couldn't be saved.");
-    showResult(q, res);
+    showDetail(`
+      <div class="result ${res.passed ? "pass" : "fail"}">
+        <div class="eyebrow">${esc(q.training.name)}</div>
+        <div class="big">${res.score}%</div>
+        <h2>${res.passed ? (res.needsSignoff ? "Passed. Your manager will sign this off next." : "Passed. This training is done.") : "Not passed yet. Please retake this training."}</h2>
+        <div class="note">${res.correct} of ${res.total} correct · pass mark ${res.passMark}%. ${res.passed ? "Your result has been saved." : "Your attempt has been saved. Review the training and take the quiz again."}</div>
+        <div class="marks">${res.review.map(m => `<span class="mark ${m.right ? "r" : "w"}">Q${m.number} ${m.right ? "✓" : "✗"}</span>`).join("")}</div>
+        <div class="actions">
+          ${!res.passed ? `<button class="btn" type="button" data-open="${esc(q.training.id)}">Review the training</button><button class="btn primary" type="button" data-quiz="${esc(q.training.id)}">Try again</button>` : ""}
+          <button class="btn${res.passed ? " primary" : ""}" type="button" data-back>Back to my trainings</button>
+        </div>
+      </div>`);
+    loadHome();
   } catch (e) {
     $("quizErr").textContent = e.message + " Your answers are still here, so you can try again.";
     btn.disabled = false; btn.textContent = "Submit answers";
   }
 }
 
-function showResult(q, res) {
-  const v = $("quizView");
-  v.innerHTML = `
-    <div class="result ${res.passed ? "pass" : "fail"}">
-      <div class="eyebrow">${esc(q.training.name)}</div>
-      <div class="big">${res.score}%</div>
-      <h2>${res.passed ? "Passed. This training is done." : "Not passed yet. Please retake this training."}</h2>
-      <div class="note">${res.correct} of ${res.total} correct · pass mark ${res.passMark}%. ${res.passed ? "Your result has been saved." : "Your attempt has been saved. Review the training and take the quiz again."}</div>
-      <div class="marks">${res.review.map(m => `<span class="mark ${m.right ? "r" : "w"}">Q${m.number} ${m.right ? "✓" : "✗"}</span>`).join("")}</div>
-      <div class="actions">
-        ${!res.passed && q.training.material ? `<a class="btn" href="${esc(q.training.material)}" target="_blank" rel="noopener">Review the training</a>` : ""}
-        ${!res.passed ? `<button class="btn primary" type="button" data-quiz="${esc(q.training.id)}">Try again</button>` : ""}
-        <button class="btn${res.passed ? " primary" : ""}" type="button" data-back>Back to my trainings</button>
-      </div>
-    </div>`;
-  window.scrollTo(0, 0);
-  loadHome();
-}
-
-function goHome() { inQuiz = false; $("quizView").hidden = true; $("quizView").innerHTML = ""; $("home").hidden = false; renderHome(); loadHome(); }
-
 document.addEventListener("click", (e) => {
+  const o = e.target.closest("[data-open]"); if (o) return openLesson(o.dataset.open);
   const q = e.target.closest("[data-quiz]"); if (q) return openQuiz(q.dataset.quiz);
+  const c = e.target.closest("[data-confirm]"); if (c) return confirmRead(c.dataset.confirm);
   if (e.target.closest("[data-back]")) return goHome();
 });
 
 loadHome();
-setInterval(() => { if (!inQuiz && document.visibilityState === "visible") loadHome(); }, 120000);
+setInterval(() => { if (!away && document.visibilityState === "visible") loadHome(); }, 120000);
 </script>
 </body>
 </html>

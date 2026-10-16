@@ -22,8 +22,8 @@ api/me.js         one employee's data, quiz questions (without answers), quiz ma
 
 ## Notion databases
 
-- **Team**: Name, Role, Employment Status, Hire Date, **Access Key** (private key in their link), **Extra Trainings** (trainings assigned to this person on top of their role), **Personal Link** (formula that builds their link).
-- **Trainings**: Item, Relevant Role, Frequency (months; 0 = one-time), Category, **Pass Mark (%)** (empty = 80), **Material Link** (what to read or watch before the quiz).
+- **Team**: Name, Role, Employment Status, Hire Date, **Extra Trainings** (assigned on top of their role), **Personal Link** (made automatically), **Access Key** (leave empty; type a new key only to cut off a link that leaked), **Link Key** (formula, don't edit).
+- **Trainings**: Item, Relevant Role, Frequency (months; 0 = one-time), Category, **Completion** (Read & confirm / Quiz), **Manager Sign-off** (tick if a manager must sign off), **Version** (change it when the SOP is updated), **Pass Mark (%)** (quiz only; empty = 80), **Material Link** (optional extra document). **The lesson itself is the training's page content in Notion**: edit it like any Notion page and the app shows the new version straight away.
 - **Quiz Questions**: Question, Training, Option A–D, Correct Answer (A–D), Order.
 - **Completions**: Employee, Training, Completed On, Manager Signed On, **Score (%)**, **Result** (Passed / Retake required), **Source**, **Answers**.
 
@@ -34,7 +34,9 @@ For every active person × every training that applies to them (by role, "All St
 | Status | Rule |
 |---|---|
 | Not completed | No attempt yet |
-| Retake required | The latest attempt scored below the training's pass mark |
+| Retake required | The latest quiz attempt scored below the training's pass mark |
+| New version | Completed, but for an older Version than the training's current one |
+| Awaiting sign-off | Completed by the employee; the training needs Manager Sign-off and Manager Signed On is empty |
 | Overdue | Last pass + Frequency is in the past |
 | Due soon | Due within 60 days |
 | Compliant | Passed, and not due for at least 60 days (or one-time) |
@@ -55,8 +57,9 @@ Every quiz attempt is saved as a new Completions row, so the full history stays 
 
 ## Day-to-day
 
-- **New hire:** add them to Team with a Role and an Access Key (any 16 random letters and numbers). Copy their **Personal Link** from Notion and send it to them.
+- **New hire:** add them to Team with a Role. Copy their **Personal Link** from Notion and send it to them.
 - **One-off assignment:** add the training to the person's Extra Trainings.
 - **New quiz:** add rows to Quiz Questions linked to the training, and set its Pass Mark.
-- **Lost or shared link:** change that person's Access Key. The old link stops working immediately.
+- **Lost or shared link:** type a new Access Key for that person. The old link stops working immediately.
+- **SOP updated:** edit the training page, then change its Version. Everyone who confirmed the old version is asked to confirm again.
 - **Manager sign-off:** fill in Manager Signed On on the passing Completions row.
