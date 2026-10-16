@@ -3,20 +3,22 @@
 // Environment variables:
 //   NOTION_TOKEN     Notion integration secret. Needs "Read content" and "Insert content".
 //   TEAM_DB, TRAININGS_DB, COMPLETIONS_DB, QUESTIONS_DB   database IDs
-//   TIMEZONE         optional, for "today" when saving a quiz (default Asia/Dubai)
+//   TIMEZONE         optional, for "today" (default Asia/Dubai)
 
 export const PROPS = {
   team: {
     name: "Name", role: "Role", status: "Employment Status", hireDate: "Hire Date",
-    key: "Access Key", extra: "Extra Trainings",
+    linkKey: "Link Key", extra: "Extra Trainings",
   },
   trainings: {
     name: "Item", roles: "Relevant Role", frequency: "Frequency (months)", category: "Category",
     passMark: "Pass Mark (%)", material: "Material Link",
+    completion: "Completion", signoff: "Manager Sign-off", version: "Version",
   },
   completions: {
     title: "Record", employee: "Employee", training: "Training", completed: "Completed On",
-    signed: "Manager Signed On", score: "Score (%)", result: "Result", source: "Source", answers: "Answers",
+    signed: "Manager Signed On", score: "Score (%)", result: "Result", source: "Source",
+    answers: "Answers", version: "Version",
   },
   questions: {
     question: "Question", training: "Training", a: "Option A", b: "Option B", c: "Option C", d: "Option D",
@@ -115,6 +117,9 @@ export function toTraining(p) {
     category: val(p, R.category),
     passMark: val(p, R.passMark) ?? DEFAULT_PASS_MARK,
     material: typeof mat === "string" && /^https:\/\//.test(mat) ? mat : null,
+    completion: val(p, R.completion) === "Quiz" ? "Quiz" : "Read & confirm",
+    needsSignoff: val(p, R.signoff) === true,
+    version: val(p, R.version),
   };
 }
 export function toRecord(p) {
@@ -128,10 +133,11 @@ export function toRecord(p) {
     score: val(p, C.score),
     result: val(p, C.result),
     source: val(p, C.source),
+    version: val(p, C.version),
   };
 }
 
-// ---------- compliance logic (the admin page has an identical copy) ----------
+// ---------- compliance logic: used by both the employee page and the manager dashboard ----------
 export function parseDate(s) { if (!s) return null; const [y, m, d] = s.slice(0, 10).split("-").map(Number); return new Date(Date.UTC(y, m - 1, d)); }
 export function addMonths(date, n) {
   const y = date.getUTCFullYear(), m = date.getUTCMonth() + n, d = date.getUTCDate();
@@ -140,39 +146,98 @@ export function addMonths(date, n) {
 }
 export function isoDay(d) { return d.toISOString().slice(0, 10); }
 export function todayIn(tz) {
-  const s = new Intl.DateTimeFormat("en-CA", { timeZone: tz || process.env.TIMEZONE || "Asia/Dubai", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-  return s; // YYYY-MM-DD
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tz || process.env.TIMEZONE || "Asia/Dubai", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 }
 
+export function byRole(staff, training) {
+  return training.roles.includes("All Staff") || (!!staff.role && training.roles.includes(staff.role));
+}
 export function applies(staff, training) {
-  return training.roles.includes("All Staff")
-    || (staff.role && training.roles.includes(staff.role))
-    || staff.extra.includes(training.id);
+  return byRole(staff, training) || staff.extra.includes(training.id);
 }
 
-// A record counts as a pass if it says so, or (for older records with no result) if it has no score or the score meets the pass mark.
+// Passed quiz, confirmed reading, or an older hand-entered record (no result, no score or score at the pass mark).
 export function isPass(rec, training) {
-  if (rec.result) return rec.result === "Passed";
+  if (rec.result) return rec.result === "Passed" || rec.result === "Confirmed";
   if (rec.score == null) return true;
   return rec.score >= training.passMark;
 }
 
 // Status for one person and one training. today is "YYYY-MM-DD".
+//   missing  -> nothing done yet
+//   retake   -> latest quiz attempt below the pass mark
+//   update   -> completed, but for an older version of the training
+//   signoff  -> completed, waiting for the manager to sign off
+//   late / soon / ok -> by due date
 export function statusFor(staff, training, records, today) {
   if (!applies(staff, training)) return { status: "na" };
   const attempts = records
     .filter((r) => r.employeeId === staff.id && r.trainingId === training.id && r.completed)
     .sort((a, b) => a.completed.localeCompare(b.completed) || String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
   const last = attempts[attempts.length - 1] || null;
-  const base = { attempts: attempts.length, last };
+  const base = {
+    attempts: attempts.length, last, extra: !byRole(staff, training),
+    score: last?.score ?? null, done: last?.completed ?? null, signed: last?.signed ?? null,
+  };
   if (!last) return { ...base, status: "missing" };
   if (!isPass(last, training)) return { ...base, status: "retake" };
+  if (training.version && (last.version || "") !== training.version) return { ...base, status: "update" };
+  if (training.needsSignoff && !last.signed) return { ...base, status: "signoff" };
   const now = parseDate(today);
-  const done = parseDate(last.completed);
-  const due = training.frequency > 0 ? addMonths(done, training.frequency) : null;
+  const due = training.frequency > 0 ? addMonths(parseDate(last.completed), training.frequency) : null;
   const days = due ? Math.round((due - now) / 86400000) : null;
   const status = due == null ? "ok" : days < 0 ? "late" : days <= DUE_SOON_DAYS ? "soon" : "ok";
-  return { ...base, status, done: last.completed, due: due ? isoDay(due) : null, days, needsSignoff: !last.signed };
+  return { ...base, status, due: due ? isoDay(due) : null, days };
+}
+
+// ---------- lesson content: a training's Notion page, simplified for display ----------
+function richText(arr) {
+  return (arr || []).map((t) => {
+    const a = t.annotations || {};
+    const href = t.href && /^https:\/\//.test(t.href) ? t.href : null;
+    return { text: t.plain_text, b: !!a.bold, i: !!a.italic, s: !!a.strikethrough, u: !!a.underline, code: !!a.code, color: a.color && a.color !== "default" ? a.color : null, href };
+  });
+}
+
+async function children(blockId) {
+  const out = [];
+  let cursor;
+  do {
+    const data = await notion(`blocks/${blockId}/children?page_size=100${cursor ? `&start_cursor=${cursor}` : ""}`, "GET");
+    out.push(...data.results);
+    cursor = data.has_more ? data.next_cursor : undefined;
+  } while (cursor);
+  return out;
+}
+
+const NESTABLE = new Set(["callout", "column_list", "column", "toggle", "bulleted_list_item", "numbered_list_item", "to_do", "quote", "synced_block"]);
+
+export async function lessonBlocks(pageId, depth = 0, budget = { left: 400 }) {
+  if (depth > 4 || budget.left <= 0) return [];
+  const raw = await children(pageId);
+  const out = [];
+  for (const b of raw) {
+    if (budget.left-- <= 0) break;
+    const d = b[b.type] || {};
+    const node = { type: b.type };
+    if (d.rich_text) node.text = richText(d.rich_text);
+    if (b.type === "to_do") node.checked = !!d.checked;
+    if (b.type === "callout") {
+      node.icon = d.icon?.type === "emoji" ? d.icon.emoji : null;
+      node.color = d.color || "default";
+    }
+    if (b.type === "image") {
+      node.src = d.type === "external" ? d.external?.url : d.file?.url;
+      node.caption = richText(d.caption);
+    }
+    if (["bookmark", "embed", "video", "pdf", "file", "link_preview"].includes(b.type)) {
+      node.href = d.url || d.external?.url || d.file?.url || null;
+      node.caption = richText(d.caption);
+    }
+    if (b.has_children && NESTABLE.has(b.type)) node.children = await lessonBlocks(b.id, depth + 1, budget);
+    out.push(node);
+  }
+  return out;
 }
 
 export function sendNotionError(res, e) {
