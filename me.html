@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>My Trainings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: one column for a phone or desk — my summary, my trainings by urgency; the quiz replaces the list while it's open */
+  :root {
+    --bg: #f4f5f2; --surface: #ffffff; --surface-2: #eef0ec; --fg: #1b231f; --muted: #5d6963; --line: #dde2dd;
+    --accent: #2c6a52; --accent-ink: #ffffff;
+    --ok: #3d8a63; --ok-soft: #e1f0e7; --soon: #b07a23; --soon-soft: #f7ecd6;
+    --late: #b5443d; --late-soft: #f8e3e1; --miss: #74559f; --miss-soft: #ece5f5;
+    --retake: #2f6fae; --retake-soft: #e2ecf8;
+    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --body: "Figtree", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111614; --surface: #19201d; --surface-2: #222a26; --fg: #e5ebe7; --muted: #9aa7a0; --line: #2c3631;
+      --accent: #6cbf98; --accent-ink: #0f1a15;
+      --ok: #6cc595; --ok-soft: #1c3227; --soon: #e0b062; --soon-soft: #362b17;
+      --late: #ec8a82; --late-soft: #3a1f1d; --miss: #b49ae0; --miss-soft: #2b2338;
+      --retake: #8ab8ec; --retake-soft: #1b2a3d;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 var(--body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: max(24px, env(safe-area-inset-top, 0px)) 56px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; display: grid; gap: 18px; }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  h1 { font: 600 clamp(26px, 6vw, 34px)/1.1 var(--display); margin: 2px 0 0; text-wrap: balance; }
+  .role { color: var(--muted); font-size: 14px; }
+  .fresh { color: var(--muted); font-size: 13px; display: flex; gap: 8px; align-items: baseline; margin-top: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; transform: translateY(-1px); }
+  .dot.warn { background: var(--soon); } .dot.err { background: var(--late); }
+
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 2px; }
+  .stat b { font: 600 30px/1 var(--display); font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--muted); font-size: 13px; }
+  .stat.todo b { color: var(--soon); } .stat.retake b { color: var(--retake); } .stat.ok b { color: var(--ok); }
+  @media (max-width: 420px) { .stat b { font-size: 24px; } .stat { padding: 12px; } }
+
+  .list { display: grid; gap: 10px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; }
+  .card.k-retake { border-color: var(--retake); }
+  .card.k-late { border-color: var(--late); }
+  .row1 { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .name { font: 600 17px/1.3 var(--display); overflow-wrap: anywhere; }
+  .meta { font: 13px/1.5 var(--mono); color: var(--muted); }
+  .pill { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+  .pill.k-ok { color: var(--ok); background: var(--ok-soft); } .pill.k-soon { color: var(--soon); background: var(--soon-soft); }
+  .pill.k-late { color: var(--late); background: var(--late-soft); } .pill.k-missing { color: var(--miss); background: var(--miss-soft); }
+  .pill.k-retake { color: var(--retake); background: var(--retake-soft); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 9px 14px; font-weight: 600; cursor: pointer; text-decoration: none; color: var(--fg); font-size: 15px; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn[disabled] { opacity: .6; cursor: progress; }
+  .note { color: var(--muted); font-size: 14px; }
+
+  .quiz { display: grid; gap: 16px; }
+  .quiz h2 { font: 600 24px/1.2 var(--display); margin: 0; text-wrap: balance; }
+  fieldset { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 16px; margin: 0; display: grid; gap: 8px; min-width: 0; }
+  fieldset.missing { border-color: var(--late); }
+  legend { float: left; width: 100%; padding: 0; margin: 0 0 6px; font-weight: 600; }
+  legend + * { clear: both; }
+  .qnum { font: 500 12px var(--mono); color: var(--muted); display: block; }
+  label.opt { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); cursor: pointer; }
+  label.opt:has(input:checked) { outline: 2px solid var(--accent); outline-offset: -2px; }
+  label.opt input { margin-top: 4px; accent-color: var(--accent); flex: none; }
+  .letter { font: 500 13px var(--mono); color: var(--muted); }
+  .err { color: var(--late); font-size: 14px; }
+
+  .result { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px; display: grid; gap: 12px; }
+  .result .big { font: 600 56px/1 var(--display); font-variant-numeric: tabular-nums; }
+  .result.pass .big { color: var(--ok); } .result.fail .big { color: var(--retake); }
+  .result h2 { font: 600 22px/1.2 var(--display); margin: 0; }
+  .marks { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mark { font: 500 13px var(--mono); padding: 4px 10px; border-radius: 6px; }
+  .mark.r { background: var(--ok-soft); color: var(--ok); } .mark.w { background: var(--retake-soft); color: var(--retake); }
+  .empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; padding: 20px; color: var(--muted); }
+  .skeleton { height: 96px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">My trainings</div>
+    <h1 id="hello">Loading your trainings…</h1>
+    <div class="role" id="role"></div>
+    <div class="fresh"><span class="dot warn" id="dot"></span><span id="freshText">Connecting…</span></div>
+  </header>
+
+  <section id="home">
+    <div class="stats" aria-label="Summary">
+      <div class="stat todo"><b id="nTodo">–</b><span>To do</span></div>
+      <div class="stat retake"><b id="nRetake">–</b><span>Retake required</span></div>
+      <div class="stat ok"><b id="nDone">–</b><span>Done</span></div>
+    </div>
+    <div class="list" id="list" style="margin-top:16px"><div class="skeleton"></div><div class="skeleton"></div></div>
+  </section>
+
+  <section id="quizView" class="quiz" hidden aria-live="polite"></section>
+</div>
+
+<script>
+const key = new URLSearchParams(location.search).get("key") || "";
+const $ = (id) => document.getElementById(id);
+const LABEL = { missing: "To do", retake: "Retake required", late: "Overdue", soon: "Due soon", ok: "Done" };
+const RANK = { retake: 0, late: 1, missing: 2, soon: 3, ok: 4 };
+let data = null, inQuiz = false;
+
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+function fmt(iso) { if (!iso) return ""; const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); }
+function setFresh(kind, text) { $("dot").className = "dot" + (kind === "ok" ? "" : kind === "warn" ? " warn" : " err"); $("freshText").textContent = text; }
+
+function line(t) {
+  if (t.status === "retake") return `Last score ${t.lastScore ?? "–"}% on ${fmt(t.lastDate)} · you need ${t.passMark}% to pass`;
+  if (t.status === "missing") return `Not started · pass mark ${t.passMark}%`;
+  if (t.status === "late") return `Overdue since ${fmt(t.due)} · last done ${fmt(t.done)}`;
+  if (t.status === "soon") return `Due ${fmt(t.due)} (in ${t.days} day${t.days === 1 ? "" : "s"})`;
+  const score = t.lastScore != null ? ` · scored ${t.lastScore}%` : "";
+  return t.due ? `Done ${fmt(t.done)}${score} · next due ${fmt(t.due)}` : `Done ${fmt(t.done)}${score}`;
+}
+
+function renderHome() {
+  if (!data) return;
+  const first = data.person.name.split(" ")[0];
+  $("hello").textContent = `Hi ${first}`;
+  $("role").textContent = data.person.role || "";
+  const list = [...data.trainings].sort((a, b) => RANK[a.status] - RANK[b.status] || (a.due || "9").localeCompare(b.due || "9") || a.name.localeCompare(b.name));
+  $("nTodo").textContent = list.filter(t => ["missing", "late", "soon"].includes(t.status)).length;
+  $("nRetake").textContent = list.filter(t => t.status === "retake").length;
+  $("nDone").textContent = list.filter(t => t.status === "ok").length;
+
+  $("list").innerHTML = list.length ? list.map(t => {
+    const canQuiz = t.questionCount > 0 && t.status !== "ok";
+    const quizLabel = t.status === "retake" ? "Retake the quiz" : t.attempts ? "Take the quiz again" : "Start the quiz";
+    return `<article class="card k-${t.status}">
+      <div class="row1"><div><div class="name">${esc(t.name)}</div><div class="meta">${esc(line(t))}</div></div><span class="pill k-${t.status}">${LABEL[t.status]}</span></div>
+      ${(t.material || canQuiz) ? `<div class="actions">
+        ${t.material ? `<a class="btn" href="${esc(t.material)}" target="_blank" rel="noopener">Open the training</a>` : ""}
+        ${canQuiz ? `<button class="btn primary" type="button" data-quiz="${esc(t.id)}">${quizLabel}</button>` : ""}
+      </div>` : (t.status !== "ok" && !t.questionCount ? `<div class="note">This training has no quiz. Your manager records it when it's done.</div>` : "")}
+    </article>`;
+  }).join("") : `<div class="empty">No trainings are assigned to you yet.</div>`;
+}
+
+async function loadHome() {
+  if (!key) { $("hello").textContent = "Open your personal link"; $("list").innerHTML = `<div class="empty">This page needs your personal link. Ask your manager to send it to you.</div>`; setFresh("err", "No personal link"); return; }
+  try {
+    const r = await fetch("/api/me?key=" + encodeURIComponent(key), { cache: "no-store" });
+    const body = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(body.message || "Couldn't load your trainings.");
+    data = body;
+    if (!inQuiz) renderHome();
+    setFresh("ok", "Up to date · " + new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }));
+  } catch (e) {
+    if (data) setFresh("err", "Couldn't refresh · " + e.message);
+    else { $("hello").textContent = "We couldn't open your trainings"; $("list").innerHTML = `<div class="empty">${esc(e.message)}</div>`; setFresh("err", "Not loaded"); }
+  }
+}
+
+// ---------- quiz ----------
+async function openQuiz(trainingId) {
+  inQuiz = true;
+  $("home").hidden = true;
+  const v = $("quizView"); v.hidden = false;
+  v.innerHTML = `<div class="skeleton"></div>`;
+  window.scrollTo(0, 0);
+  try {
+    const r = await fetch(`/api/me?key=${encodeURIComponent(key)}&quiz=${encodeURIComponent(trainingId)}`, { cache: "no-store" });
+    const q = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(q.message || "Couldn't load the quiz.");
+    if (!q.questions.length) throw new Error("This training has no quiz questions yet.");
+    v.innerHTML = `
+      <div><button class="btn" type="button" data-back>← Back to my trainings</button></div>
+      <div><div class="eyebrow">Quiz</div><h2>${esc(q.training.name)}</h2>
+        <div class="note">${q.questions.length} question${q.questions.length === 1 ? "" : "s"} · you need ${q.training.passMark}% to pass${q.training.material ? ` · <a href="${esc(q.training.material)}" target="_blank" rel="noopener">open the training first</a>` : ""}</div></div>
+      <form id="quizForm" class="quiz" novalidate>
+        ${q.questions.map((qq, i) => `<fieldset id="fs-${esc(qq.id)}">
+          <legend><span class="qnum">Question ${i + 1} of ${q.questions.length}</span>${esc(qq.text)}</legend>
+          ${qq.options.map(o => `<label class="opt"><input type="radio" name="${esc(qq.id)}" value="${esc(o.letter)}" id="o-${esc(qq.id)}-${esc(o.letter)}"><span><span class="letter">${esc(o.letter)}</span> ${esc(o.text)}</span></label>`).join("")}
+        </fieldset>`).join("")}
+        <div class="err" id="quizErr" role="alert"></div>
+        <div class="actions"><button class="btn primary" type="submit" id="submitBtn">Submit answers</button></div>
+      </form>`;
+    $("quizForm").addEventListener("submit", (e) => { e.preventDefault(); submitQuiz(q); });
+    $("quizForm").addEventListener("change", (e) => { const fs = e.target.closest("fieldset"); if (fs) fs.classList.remove("missing"); $("quizErr").textContent = ""; });
+  } catch (e) {
+    v.innerHTML = `<div><button class="btn" type="button" data-back>← Back to my trainings</button></div><div class="empty">${esc(e.message)}</div>`;
+  }
+}
+
+async function submitQuiz(q) {
+  const answers = {};
+  let firstMissing = null;
+  for (const qq of q.questions) {
+    const picked = document.querySelector(`input[name="${CSS.escape(qq.id)}"]:checked`);
+    const fs = document.getElementById("fs-" + qq.id);
+    if (picked) { answers[qq.id] = picked.value; fs.classList.remove("missing"); }
+    else { fs.classList.add("missing"); firstMissing = firstMissing || fs; }
+  }
+  if (firstMissing) {
+    $("quizErr").textContent = `Answer every question before submitting. ${q.questions.length - Object.keys(answers).length} left.`;
+    firstMissing.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+  const btn = $("submitBtn"); btn.disabled = true; btn.textContent = "Marking…";
+  try {
+    const r = await fetch("/api/me", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, trainingId: q.training.id, answers }) });
+    const res = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(res.message || "Your answers couldn't be saved.");
+    showResult(q, res);
+  } catch (e) {
+    $("quizErr").textContent = e.message + " Your answers are still here, so you can try again.";
+    btn.disabled = false; btn.textContent = "Submit answers";
+  }
+}
+
+function showResult(q, res) {
+  const v = $("quizView");
+  v.innerHTML = `
+    <div class="result ${res.passed ? "pass" : "fail"}">
+      <div class="eyebrow">${esc(q.training.name)}</div>
+      <div class="big">${res.score}%</div>
+      <h2>${res.passed ? "Passed. This training is done." : "Not passed yet. Please retake this training."}</h2>
+      <div class="note">${res.correct} of ${res.total} correct · pass mark ${res.passMark}%. ${res.passed ? "Your result has been saved." : "Your attempt has been saved. Review the training and take the quiz again."}</div>
+      <div class="marks">${res.review.map(m => `<span class="mark ${m.right ? "r" : "w"}">Q${m.number} ${m.right ? "✓" : "✗"}</span>`).join("")}</div>
+      <div class="actions">
+        ${!res.passed && q.training.material ? `<a class="btn" href="${esc(q.training.material)}" target="_blank" rel="noopener">Review the training</a>` : ""}
+        ${!res.passed ? `<button class="btn primary" type="button" data-quiz="${esc(q.training.id)}">Try again</button>` : ""}
+        <button class="btn${res.passed ? " primary" : ""}" type="button" data-back>Back to my trainings</button>
+      </div>
+    </div>`;
+  window.scrollTo(0, 0);
+  loadHome();
+}
+
+function goHome() { inQuiz = false; $("quizView").hidden = true; $("quizView").innerHTML = ""; $("home").hidden = false; renderHome(); loadHome(); }
+
+document.addEventListener("click", (e) => {
+  const q = e.target.closest("[data-quiz]"); if (q) return openQuiz(q.dataset.quiz);
+  if (e.target.closest("[data-back]")) return goHome();
+});
+
+loadHome();
+setInterval(() => { if (!inQuiz && document.visibilityState === "visible") loadHome(); }, 120000);
+</script>
+</body>
+</html>

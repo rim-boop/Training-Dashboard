@@ -21,6 +21,7 @@
     --soon: #b07a23;   --soon-soft: #f7ecd6;
     --late: #b5443d;   --late-soft: #f8e3e1;
     --miss: #74559f;   --miss-soft: #ece5f5;
+    --retake: #2f6fae; --retake-soft: #e2ecf8;
     --na: #c9cec9;
     --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
     --body: "Figtree", "Segoe UI", system-ui, sans-serif;
@@ -31,7 +32,7 @@
       --bg: #111614; --surface: #19201d; --surface-2: #222a26; --fg: #e5ebe7; --muted: #9aa7a0; --line: #2c3631;
       --accent: #6cbf98; --accent-ink: #0f1a15;
       --ok: #6cc595; --ok-soft: #1c3227; --soon: #e0b062; --soon-soft: #362b17;
-      --late: #ec8a82; --late-soft: #3a1f1d; --miss: #b49ae0; --miss-soft: #2b2338; --na: #3a4540;
+      --late: #ec8a82; --late-soft: #3a1f1d; --miss: #b49ae0; --miss-soft: #2b2338; --retake: #8ab8ec; --retake-soft: #1b2a3d; --na: #3a4540;
       color-scheme: dark;
     }
   }
@@ -39,7 +40,7 @@
     --bg: #111614; --surface: #19201d; --surface-2: #222a26; --fg: #e5ebe7; --muted: #9aa7a0; --line: #2c3631;
     --accent: #6cbf98; --accent-ink: #0f1a15;
     --ok: #6cc595; --ok-soft: #1c3227; --soon: #e0b062; --soon-soft: #362b17;
-    --late: #ec8a82; --late-soft: #3a1f1d; --miss: #b49ae0; --miss-soft: #2b2338; --na: #3a4540;
+    --late: #ec8a82; --late-soft: #3a1f1d; --miss: #b49ae0; --miss-soft: #2b2338; --retake: #8ab8ec; --retake-soft: #1b2a3d; --na: #3a4540;
     color-scheme: dark;
   }
 
@@ -80,7 +81,7 @@
   .stat .k { font-size: 13px; color: var(--muted); font-weight: 500; }
   .stat .v { font: 600 32px/1 var(--display); font-variant-numeric: tabular-nums; }
   .stat .s { font-size: 13px; color: var(--muted); }
-  .v.ok { color: var(--ok); } .v.soon { color: var(--soon); } .v.late { color: var(--late); } .v.miss { color: var(--miss); }
+  .v.ok { color: var(--ok); } .v.soon { color: var(--soon); } .v.late { color: var(--late); } .v.miss { color: var(--miss); } .v.retake { color: var(--retake); }
 
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 14px; min-width: 0; }
   .panel h2 { font: 600 19px/1.25 var(--display); margin: 0; }
@@ -90,7 +91,7 @@
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
   .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
   .st-ok { background: var(--ok); } .st-soon { background: var(--soon); } .st-late { background: var(--late); }
-  .st-missing { background: var(--miss); } .st-na { background: var(--na); }
+  .st-missing { background: var(--miss); } .st-retake { background: var(--retake); } .st-na { background: var(--na); }
 
   /* Heatmap */
   .scroll-x { overflow-x: auto; }
@@ -126,9 +127,10 @@
   }
   a.item:hover { border-color: var(--accent); border-left-color: inherit; }
   .item.k-ok { border-left-color: var(--ok); } .item.k-soon { border-left-color: var(--soon); }
-  .item.k-late { border-left-color: var(--late); } .item.k-missing { border-left-color: var(--miss); }
+  .item.k-late { border-left-color: var(--late); } .item.k-missing { border-left-color: var(--miss); } .item.k-retake { border-left-color: var(--retake); }
   .item .t { font-weight: 600; overflow-wrap: anywhere; }
   .item .d { font: 12.5px/1.4 var(--mono); color: var(--muted); }
+  .chip.extra { background: var(--surface); color: var(--muted); border: 1px solid var(--line); }
   .chip { display: inline-block; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--soon-soft); color: var(--soon); justify-self: start; margin-top: 4px; }
 
   .people { display: grid; gap: 6px; }
@@ -223,11 +225,12 @@ const REFRESH_MS = 60000;
 const DUE_SOON_DAYS = 60;
 
 const STATUS = {
-  missing: { label: "Not completed", order: 0 },
-  late:    { label: "Overdue",       order: 1 },
-  soon:    { label: "Due soon",      order: 2 },
-  ok:      { label: "Compliant",     order: 3 },
-  na:      { label: "Not applicable", order: 4 },
+  missing: { label: "Not completed",   order: 0 },
+  retake:  { label: "Retake required", order: 1 },
+  late:    { label: "Overdue",         order: 2 },
+  soon:    { label: "Due soon",        order: 3 },
+  ok:      { label: "Compliant",       order: 4 },
+  na:      { label: "Not applicable",  order: 5 },
 };
 
 const state = { data: null, model: null, tab: "overview", emp: null, trn: null, calMonth: null, calFilter: "all", password: null };
@@ -260,25 +263,33 @@ function compute(data) {
   const trainings = [...data.trainings].sort((a, b) =>
     (a.roles.includes("All Staff") ? 0 : 1) - (b.roles.includes("All Staff") ? 0 : 1) || a.name.localeCompare(b.name));
 
-  const latest = new Map();
+  // All attempts per person + training, oldest first (same rules as api/_lib.js)
+  const attempts = new Map();
   for (const r of data.records) {
     if (!r.employeeId || !r.trainingId || !r.completed) continue;
     const key = r.employeeId + "|" + r.trainingId;
-    const prev = latest.get(key);
-    if (!prev || r.completed > prev.completed) latest.set(key, r);
+    if (!attempts.has(key)) attempts.set(key, []);
+    attempts.get(key).push(r);
   }
+  for (const list of attempts.values())
+    list.sort((x, y) => x.completed.localeCompare(y.completed) || String(x.createdAt || "").localeCompare(String(y.createdAt || "")));
+  const passMark = t => t.passMark ?? 80;
+  const isPass = (r, t) => r.result ? r.result === "Passed" : (r.score == null || r.score >= passMark(t));
 
   const cells = {};
   const items = [];
   for (const s of staff) {
     cells[s.id] = {};
     for (const t of trainings) {
-      const applies = t.roles.includes("All Staff") || (s.role && t.roles.includes(s.role));
+      const applies = t.roles.includes("All Staff") || (s.role && t.roles.includes(s.role)) || (s.extra || []).includes(t.id);
       let c;
       if (!applies) c = { status: "na" };
       else {
-        const rec = latest.get(s.id + "|" + t.id) || null;
+        const list = attempts.get(s.id + "|" + t.id) || [];
+        const rec = list[list.length - 1] || null;
+        const extra = !(t.roles.includes("All Staff") || (s.role && t.roles.includes(s.role)));
         if (!rec) c = { status: "missing", rec: null, due: null, days: null };
+        else if (!isPass(rec, t)) c = { status: "retake", rec, done: parseDate(rec.completed), due: null, days: null };
         else {
           const done = parseDate(rec.completed);
           const due = t.frequency > 0 ? addMonths(done, t.frequency) : null;
@@ -286,7 +297,7 @@ function compute(data) {
           const status = due == null ? "ok" : days < 0 ? "late" : days <= DUE_SOON_DAYS ? "soon" : "ok";
           c = { status, rec, done, due, days, needsSignoff: !rec.signed };
         }
-        c.staff = s; c.training = t;
+        Object.assign(c, { staff: s, training: t, attempts: list.length, score: rec ? rec.score : null, passMark: passMark(t), extra });
         items.push(c);
       }
       cells[s.id][t.id] = c;
@@ -296,32 +307,35 @@ function compute(data) {
   const perStaff = staff.map(s => {
     const mine = items.filter(i => i.staff === s);
     const count = k => mine.filter(i => i.status === k).length;
-    return { s, mine, total: mine.length, ok: count("ok"), soon: count("soon"), late: count("late"), missing: count("missing") };
+    return { s, mine, total: mine.length, ok: count("ok"), soon: count("soon"), late: count("late"), missing: count("missing"), retake: count("retake") };
   });
 
   return { staff, trainings, cells, items, perStaff, now };
 }
 
 // ---------- detail text ----------
+function scoreText(c) { return c.score != null ? ` · scored ${c.score}%` : ""; }
 function detail(c) {
   if (c.status === "missing") return "Not yet completed";
+  if (c.status === "retake") return `Scored ${c.score ?? "–"}% on ${fmt(c.done)} · pass mark ${c.passMark}% · ${plural(c.attempts, "attempt")}`;
   if (c.status === "late") return `Overdue ${-c.days}d · due ${fmt(c.due)}`;
   if (c.status === "soon") return c.days === 0 ? `Due today · ${fmt(c.due)}` : `Due in ${c.days}d · ${fmt(c.due)}`;
-  if (c.due) return `Completed ${fmt(c.done)} · next due ${fmt(c.due)}`;
-  return `Completed ${fmt(c.done)} (one-time)`;
+  if (c.due) return `Completed ${fmt(c.done)}${scoreText(c)} · next due ${fmt(c.due)}`;
+  return `Completed ${fmt(c.done)}${scoreText(c)} (one-time)`;
 }
 
 // ---------- views ----------
 function viewOverview(m) {
   const n = m.staff.length;
   const full = m.perStaff.filter(p => p.total > 0 && p.ok === p.total).length;
-  const nonCompliant = m.perStaff.filter(p => p.late + p.missing > 0).length;
-  const actionOnly = m.perStaff.filter(p => p.late + p.missing === 0 && p.soon > 0).length;
+  const nonCompliant = m.perStaff.filter(p => p.late + p.missing + p.retake > 0).length;
+  const actionOnly = m.perStaff.filter(p => p.late + p.missing + p.retake === 0 && p.soon > 0).length;
   const soon = m.items.filter(i => i.status === "soon").length;
   const late = m.items.filter(i => i.status === "late").length;
   const valid = m.items.filter(i => i.status === "ok" || i.status === "soon").length;
   const pct = m.items.length ? Math.round(valid / m.items.length * 100) : 0;
   const pending = m.items.filter(i => i.rec && i.needsSignoff);
+  const retakes = m.items.filter(i => i.status === "retake");
 
   const head = m.trainings.map(t => `<th class="col" scope="col" title="${esc(t.name)}"><span>${esc(t.name)}</span></th>`).join("");
   const rows = m.staff.map(s => `<tr>
@@ -344,11 +358,20 @@ function viewOverview(m) {
     <p class="sub">Every staff member × every applicable training. Click a name to open that person.</p>
     <div class="legend">
       <span><i class="sw st-ok"></i>Compliant</span><span><i class="sw st-soon"></i>Due soon</span>
-      <span><i class="sw st-late"></i>Overdue</span><span><i class="sw st-missing"></i>Not completed</span>
+      <span><i class="sw st-late"></i>Overdue</span><span><i class="sw st-missing"></i>Not completed</span><span><i class="sw st-retake"></i>Retake required</span>
       <span><i class="sw" style="border:1px dashed var(--na)"></i>Not applicable</span>
     </div>
     <div class="scroll-x"><table class="heat"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
   </section>
+
+  ${retakes.length ? `<section class="panel">
+    <h2>Needs a retake</h2>
+    <p class="sub">Latest quiz attempt scored below the training's pass mark.</p>
+    <div class="people">${retakes.map(i => {
+      const u = safeUrl(i.rec.url); const tag = u ? "a" : "div";
+      return `<${tag} class="person"${u ? ` href="${esc(u)}" target="_blank" rel="noopener"` : ""}><span class="l">${avatar(i.staff.name)}<span><span class="nm">${esc(i.staff.name)}</span><br><span class="role">${esc(i.training.name)}</span></span></span><span class="d">${esc(detail(i))}</span></${tag}>`;
+    }).join("")}</div>
+  </section>` : ""}
 
   ${pending.length ? `<section class="panel">
     <h2>Waiting for manager sign-off</h2>
@@ -365,12 +388,12 @@ function itemCard(c, titleText) {
   const tag = u ? "a" : "div";
   return `<${tag} class="item k-${c.status}"${u ? ` href="${esc(u)}" target="_blank" rel="noopener"` : ""}>
     <span class="t">${esc(titleText)}</span><span class="d">${esc(detail(c))}</span>
-    ${c.rec && c.needsSignoff ? `<span class="chip">Awaiting sign-off</span>` : ""}
+    ${c.rec && c.needsSignoff ? `<span class="chip">Awaiting sign-off</span>` : ""}${c.extra ? `<span class="chip extra">Assigned individually</span>` : ""}
   </${tag}>`;
 }
 
 function groups(list, renderOne) {
-  const order = ["missing", "late", "soon", "ok"];
+  const order = ["missing", "retake", "late", "soon", "ok"];
   return order.map(k => {
     const g = list.filter(c => c.status === k);
     if (!g.length) return "";
@@ -390,7 +413,7 @@ function viewEmployees(m) {
   <div class="pick"><label for="empSelect">Staff member</label><select id="empSelect">${opts}</select></div>
   <section class="panel">
     <div class="profile">${avatar(s.name, true)}<div><h2>${esc(s.name)}</h2><div class="role">${esc(s.role || "No role")}${s.hireDate ? ` · hired ${fmt(parseDate(s.hireDate))}` : ""}</div></div></div>
-    <div class="facts"><span><b>${p.total}</b> trainings tracked</span><span><b>${p.ok}</b> on track</span><span><b>${p.soon + p.late + p.missing}</b> need attention</span><span><b>${pct}%</b> completion rate</span></div>
+    <div class="facts"><span><b>${p.total}</b> trainings tracked</span><span><b>${p.ok}</b> on track</span><span><b>${p.soon + p.late + p.missing + p.retake}</b> need attention</span><span><b>${pct}%</b> completion rate</span></div>
     ${p.total ? groups(sorted, g => `<div class="items">${g.map(c => itemCard(c, c.training.name)).join("")}</div>`) : `<p class="empty">No trainings apply to this role.</p>`}
   </section>`;
 }
@@ -406,8 +429,8 @@ function viewTrainings(m) {
   return `
   <div class="pick"><label for="trnSelect">Training</label><select id="trnSelect">${opts}</select></div>
   <section class="panel">
-    <div><h2>${esc(t.name)}</h2><div class="role">${esc(freqText(t))} · for ${esc(appliesTo)} · applies to ${list.length} of ${m.staff.length} staff${t.category ? ` · ${esc(t.category)}` : ""}</div></div>
-    <div class="facts"><span><b>${count("ok")}</b> on track</span><span><b>${count("soon")}</b> due soon</span><span><b>${count("late")}</b> overdue</span><span><b>${count("missing")}</b> not completed</span></div>
+    <div><h2>${esc(t.name)}</h2><div class="role">${esc(freqText(t))} · pass mark ${t.passMark ?? 80}% · for ${esc(appliesTo)} · applies to ${list.length} of ${m.staff.length} staff${t.category ? ` · ${esc(t.category)}` : ""}</div></div>
+    <div class="facts"><span><b>${count("ok")}</b> on track</span><span><b>${count("soon")}</b> due soon</span><span><b>${count("late")}</b> overdue</span><span><b>${count("retake")}</b> retake required</span><span><b>${count("missing")}</b> not completed</span></div>
     ${list.length ? groups(list, g => `<div class="people">${g.map(c => {
       const u = c.rec ? safeUrl(c.rec.url) : null; const tag = u ? "a" : "div";
       return `<${tag} class="person"${u ? ` href="${esc(u)}" target="_blank" rel="noopener"` : ""}><span class="l">${avatar(c.staff.name)}<span><span class="nm">${esc(c.staff.name)}</span><br><span class="role">${esc(c.staff.role || "")}</span></span></span><span class="d">${esc(detail(c))}${c.rec && c.needsSignoff ? " · awaiting sign-off" : ""}</span></${tag}>`;
