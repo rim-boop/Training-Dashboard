@@ -1,73 +1,590 @@
 <!doctype html>
 <html lang="en">
-<head>
+<title>Training Compliance Dashboard</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>My Trainings</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-  :root { --bg:#f7f7f5; --card:#fff; --text:#1f1f1f; --muted:#6b6b6b; --line:#e6e6e3;
-          --green:#2f7d5b; --amber:#b7791f; --red:#b83b3b; --gray:#8a8a85; }
-  * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--text);
-         font:15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-  main { max-width:720px; margin:0 auto; padding:32px 16px; }
-  h1 { font-size:24px; margin:0 0 4px; }
-  .sub { color:var(--muted); font-size:13px; margin-bottom:24px; }
-  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:24px; }
-  .stat { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
-  .stat b { display:block; font-size:26px; }
-  .stat span { color:var(--muted); font-size:13px; }
-  .row { display:flex; align-items:center; justify-content:space-between; gap:12px;
-         background:var(--card); border:1px solid var(--line); border-radius:12px;
-         padding:14px 16px; margin-bottom:8px; text-decoration:none; color:inherit; }
-  .row:hover { border-color:#ccc; }
-  .due { color:var(--muted); font-size:13px; }
-  .pill { font-size:12px; padding:3px 10px; border-radius:999px; white-space:nowrap; color:#fff; }
-  .Completed { background:var(--green); } .Overdue { background:var(--red); }
-  .Not\ started { background:var(--gray); }
-  .msg { color:var(--muted); padding:24px 0; }
-</style>
-</head>
-<body>
-<main>
-  <h1>My trainings</h1>
-  <div class="sub" id="updated">Loading…</div>
-  <div class="stats">
-    <div class="stat"><b id="s-done">–</b><span>Completed</span></div>
-    <div class="stat"><b id="s-todo">–</b><span>Not started</span></div>
-    <div class="stat"><b id="s-late">–</b><span>Overdue</span></div>
-  </div>
-  <div id="list"></div>
-</main>
-<script>
-  const key = new URLSearchParams(location.search).get("key");
-  const list = document.getElementById("list");
-
-  async function load() {
-    if (!key) { list.innerHTML = '<p class="msg">Open your personal link to see your trainings.</p>'; return; }
-    try {
-      const res = await fetch("/api/trainings?key=" + encodeURIComponent(key));
-      if (!res.ok) throw new Error(res.status === 403 ? "This link isn't valid." : "Couldn't load trainings.");
-      const rows = await res.json();
-      const count = s => rows.filter(r => r.status === s).length;
-      document.getElementById("s-done").textContent = count("Completed");
-      document.getElementById("s-todo").textContent = count("Not started");
-      document.getElementById("s-late").textContent = count("Overdue");
-      list.innerHTML = rows.length ? rows.map(r => `
-        <a class="row" href="${r.url}" target="_blank" rel="noopener">
-          <div><div>${escapeHtml(r.training)}</div>
-               <div class="due">${r.due ? "Due " + new Date(r.due).toLocaleDateString() : "No due date"}</div></div>
-          <span class="pill ${r.status}">${escapeHtml(r.status)}</span>
-        </a>`).join("") : '<p class="msg">No trainings assigned to you.</p>';
-      document.getElementById("updated").textContent = "Live from Notion · updated " + new Date().toLocaleTimeString();
-    } catch (e) {
-      list.innerHTML = `<p class="msg">${e.message}</p>`;
+  /* Layout: clinic-office ledger — header and tab bar, then one view at a time; status colour is the main signal */
+  :root {
+    --bg: #f4f5f2;
+    --surface: #ffffff;
+    --surface-2: #eef0ec;
+    --fg: #1b231f;
+    --muted: #5d6963;
+    --line: #dde2dd;
+    --accent: #2c6a52;
+    --accent-ink: #ffffff;
+    --ok: #3d8a63;     --ok-soft: #e1f0e7;
+    --soon: #b07a23;   --soon-soft: #f7ecd6;
+    --late: #b5443d;   --late-soft: #f8e3e1;
+    --miss: #74559f;   --miss-soft: #ece5f5;
+    --na: #c9cec9;
+    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --body: "Figtree", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #111614; --surface: #19201d; --surface-2: #222a26; --fg: #e5ebe7; --muted: #9aa7a0; --line: #2c3631;
+      --accent: #6cbf98; --accent-ink: #0f1a15;
+      --ok: #6cc595; --ok-soft: #1c3227; --soon: #e0b062; --soon-soft: #362b17;
+      --late: #ec8a82; --late-soft: #3a1f1d; --miss: #b49ae0; --miss-soft: #2b2338; --na: #3a4540;
+      color-scheme: dark;
     }
   }
-  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+  :root[data-theme="dark"] {
+    --bg: #111614; --surface: #19201d; --surface-2: #222a26; --fg: #e5ebe7; --muted: #9aa7a0; --line: #2c3631;
+    --accent: #6cbf98; --accent-ink: #0f1a15;
+    --ok: #6cc595; --ok-soft: #1c3227; --soon: #e0b062; --soon-soft: #362b17;
+    --late: #ec8a82; --late-soft: #3a1f1d; --miss: #b49ae0; --miss-soft: #2b2338; --na: #3a4540;
+    color-scheme: dark;
+  }
 
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 15px/1.5 var(--body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 28px 56px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 20px; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Header */
+  .head { display: flex; gap: 14px; align-items: flex-start; }
+  .logo { width: 44px; height: 44px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; flex: none; }
+  .logo svg { width: 22px; height: 22px; }
+  .head h1 { font: 600 clamp(24px, 4vw, 30px)/1.15 var(--display); margin: 0; text-wrap: balance; }
+  .head p { margin: 2px 0 0; color: var(--muted); max-width: 62ch; }
+  .fresh { display: flex; align-items: baseline; gap: 8px; color: var(--muted); font-size: 13px; margin-top: 8px; }
+  #view { display: grid; gap: 16px; min-width: 0; }
+  .fresh .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; transform: translateY(-1px); }
+  .fresh .dot.warn { background: var(--soon); }
+  .fresh .dot.err { background: var(--late); }
+  .fresh code { font-family: var(--mono); font-size: 12px; }
+
+  /* Tabs */
+  .tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; justify-self: start; max-width: 100%; }
+  .tab { border: 0; background: transparent; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 500; color: var(--muted); white-space: nowrap; }
+  .tab[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+
+  /* Cards and stats */
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 760px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 4px; align-content: start; }
+  .stat .k { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .stat .v { font: 600 32px/1 var(--display); font-variant-numeric: tabular-nums; }
+  .stat .s { font-size: 13px; color: var(--muted); }
+  .v.ok { color: var(--ok); } .v.soon { color: var(--soon); } .v.late { color: var(--late); } .v.miss { color: var(--miss); }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 14px; min-width: 0; }
+  .panel h2 { font: 600 19px/1.25 var(--display); margin: 0; }
+  .panel .sub { color: var(--muted); margin: -8px 0 0; font-size: 14px; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
+  .st-ok { background: var(--ok); } .st-soon { background: var(--soon); } .st-late { background: var(--late); }
+  .st-missing { background: var(--miss); } .st-na { background: var(--na); }
+
+  /* Heatmap */
+  .scroll-x { overflow-x: auto; }
+  table.heat { border-collapse: separate; border-spacing: 0; width: auto; }
+  .heat th, .heat td { padding: 0; }
+  .heat thead th { vertical-align: bottom; padding: 0 4px 10px; }
+  .heat thead th.col { width: 40px; }
+  .heat thead th.col span {
+    writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap;
+    font-size: 12px; color: var(--muted); font-weight: 500; display: inline-block; max-height: 190px; overflow: hidden; text-overflow: ellipsis;
+  }
+  .heat tbody tr { border-top: 1px solid var(--line); }
+  .heat tbody td { border-top: 1px solid var(--line); height: 52px; text-align: center; }
+  .heat td.who { text-align: left; padding-right: 24px; min-width: 210px; }
+  .rowbtn { display: flex; align-items: center; gap: 10px; border: 0; background: none; padding: 6px 0; cursor: pointer; text-align: left; width: 100%; }
+  .rowbtn:hover .nm { color: var(--accent); }
+  .nm { font-weight: 600; line-height: 1.2; }
+  .role { font-size: 12px; color: var(--muted); }
+  .cell { width: 24px; height: 24px; border-radius: 6px; display: inline-block; vertical-align: middle; }
+  .cell.st-na { background: transparent; border: 1px dashed var(--na); }
+
+  .av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 600; font-size: 13px; flex: none; letter-spacing: .02em; }
+  .av.lg { width: 48px; height: 48px; font-size: 16px; }
+
+  /* Lists */
+  .group { display: grid; gap: 8px; }
+  .group h3 { font-size: 13px; font-weight: 600; margin: 4px 0 0; display: flex; align-items: center; gap: 8px; }
+  .group h3 .sw { border-radius: 50%; width: 9px; height: 9px; }
+  .items { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+  .item {
+    display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-left: 4px solid var(--na);
+    border-radius: 0 8px 8px 0; background: var(--surface-2); color: inherit; text-decoration: none; min-width: 0;
+  }
+  a.item:hover { border-color: var(--accent); border-left-color: inherit; }
+  .item.k-ok { border-left-color: var(--ok); } .item.k-soon { border-left-color: var(--soon); }
+  .item.k-late { border-left-color: var(--late); } .item.k-missing { border-left-color: var(--miss); }
+  .item .t { font-weight: 600; overflow-wrap: anywhere; }
+  .item .d { font: 12.5px/1.4 var(--mono); color: var(--muted); }
+  .chip { display: inline-block; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--soon-soft); color: var(--soon); justify-self: start; margin-top: 4px; }
+
+  .people { display: grid; gap: 6px; }
+  .person { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); color: inherit; text-decoration: none; flex-wrap: wrap; }
+  .person .l { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .person .d { font: 12.5px/1.4 var(--mono); color: var(--muted); }
+
+  .pick { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .pick label { font-size: 13px; color: var(--muted); font-weight: 500; }
+  select { font: inherit; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); max-width: 100%; }
+
+  .profile { display: flex; gap: 14px; align-items: center; }
+  .profile h2 { font-size: 22px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--muted); }
+  .facts b { color: var(--fg); font-variant-numeric: tabular-nums; }
+
+  /* Calendar */
+  .calbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+  .calnav { display: flex; gap: 8px; align-items: center; }
+  .calnav h2 { min-width: 9.5em; text-align: center; }
+  .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-weight: 500; }
+  .btn:hover { border-color: var(--accent); }
+  .filters { display: inline-flex; gap: 4px; padding: 3px; border-radius: 10px; background: var(--surface-2); flex-wrap: wrap; }
+  .filters button { border: 0; background: transparent; padding: 6px 12px; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--muted); }
+  .filters button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+  .cal .dow { font-size: 12px; color: var(--muted); text-align: center; font-weight: 500; padding-bottom: 2px; }
+  .day { min-height: 92px; border-radius: 8px; background: var(--surface-2); padding: 6px; display: grid; align-content: start; gap: 4px; min-width: 0; }
+  .day.out { background: transparent; border: 1px dashed var(--line); }
+  .day.today { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .day .n { font: 500 12px var(--mono); color: var(--muted); }
+  .ev { font-size: 11.5px; line-height: 1.25; padding: 3px 6px; border-radius: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ev.k-late { background: var(--late-soft); color: var(--late); }
+  .ev.k-soon { background: var(--soon-soft); color: var(--soon); }
+  .ev.k-ok { background: var(--ok-soft); color: var(--ok); }
+  .more { font-size: 11px; color: var(--muted); }
+  @media (max-width: 640px) {
+    .day { min-height: 54px; padding: 4px; }
+    .ev { font-size: 0; padding: 0; width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .ev.k-late { background: var(--late); } .ev.k-soon { background: var(--soon); } .ev.k-ok { background: var(--ok); }
+    .day .evs { display: flex; flex-wrap: wrap; gap: 3px; }
+    .more { display: none; }
+  }
+  .agenda { display: grid; gap: 6px; }
+  .agenda .row { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); color: inherit; text-decoration: none; }
+  .agenda .date { font: 500 12.5px var(--mono); color: var(--muted); }
+  .agenda .what { min-width: 0; overflow-wrap: anywhere; }
+  .badge { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .badge.k-late { background: var(--late-soft); color: var(--late); }
+  .badge.k-soon { background: var(--soon-soft); color: var(--soon); }
+  .badge.k-ok { background: var(--ok-soft); color: var(--ok); }
+  @media (max-width: 520px) { .agenda .row { grid-template-columns: minmax(0, 1fr) auto; } .agenda .date { grid-column: 1 / -1; } }
+
+  .empty { color: var(--muted); padding: 8px 0; }
+  .notice { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 20px; display: grid; gap: 10px; max-width: 520px; }
+  .notice h2 { font: 600 19px var(--display); margin: 0; }
+  .notice input { font: inherit; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
+  .notice .err { color: var(--late); font-size: 14px; }
+  .primary { border: 0; background: var(--accent); color: var(--accent-ink); padding: 9px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; justify-self: start; }
+  .skeleton { height: 120px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+  @media (prefers-reduced-motion: no-preference) { .view { animation: fade .18s ease-out; } @keyframes fade { from { opacity: .4 } to { opacity: 1 } } }
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h13"/></svg>
+    </div>
+    <div>
+      <h1>Training Compliance Dashboard</h1>
+      <p>Every staff member's training completion, due dates and sign-off status, read from Notion.</p>
+      <div class="fresh" id="fresh"><span class="dot warn" id="dot"></span><span id="freshText">Loading from Notion…</span></div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Views">
+    <button class="tab" role="tab" id="tab-overview" data-tab="overview" aria-selected="true">Overview</button>
+    <button class="tab" role="tab" id="tab-employees" data-tab="employees" aria-selected="false">By Employee</button>
+    <button class="tab" role="tab" id="tab-trainings" data-tab="trainings" aria-selected="false">By Training</button>
+    <button class="tab" role="tab" id="tab-calendar" data-tab="calendar" aria-selected="false">Calendar</button>
+  </nav>
+
+  <main id="view" class="view" aria-live="polite">
+    <div class="stats"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+  </main>
+</div>
+
+<script>
+// A snapshot is embedded only in the preview build. The deployed app leaves it null and reads /api/dashboard.
+const SNAPSHOT = /*SNAPSHOT*/null/*END*/;
+const REFRESH_MS = 60000;
+const DUE_SOON_DAYS = 60;
+
+const STATUS = {
+  missing: { label: "Not completed", order: 0 },
+  late:    { label: "Overdue",       order: 1 },
+  soon:    { label: "Due soon",      order: 2 },
+  ok:      { label: "Compliant",     order: 3 },
+  na:      { label: "Not applicable", order: 4 },
+};
+
+const state = { data: null, model: null, tab: "overview", emp: null, trn: null, calMonth: null, calFilter: "all", password: null };
+const $ = (id) => document.getElementById(id);
+
+// ---------- helpers ----------
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+function safeUrl(u) { return typeof u === "string" && /^https:\/\//.test(u) ? u : null; }
+function parseDate(s) { if (!s) return null; const [y, m, d] = s.slice(0, 10).split("-").map(Number); return new Date(y, m - 1, d); }
+function today() { const t = new Date(); t.setHours(0, 0, 0, 0); return t; }
+function addMonths(date, n) {
+  const y = date.getFullYear(), m = date.getMonth() + n, d = date.getDate();
+  const last = new Date(y, m + 1, 0).getDate();
+  return new Date(y, m, Math.min(d, last));
+}
+function dayDiff(a, b) { return Math.round((a - b) / 86400000); }
+function fmt(d) { return d ? d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : ""; }
+function iso(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
+function initials(name) { return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join(""); }
+const AV = ["#2c6a52", "#3a6ea5", "#9a5b2e", "#7a4f9a", "#a5465e", "#4f7a3a", "#56606a", "#2f7f86"];
+function avColor(name) { let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0; return AV[h % AV.length]; }
+function avatar(name, lg) { return `<span class="av${lg ? " lg" : ""}" style="background:${avColor(name)}" aria-hidden="true">${esc(initials(name))}</span>`; }
+function plural(n, w) { return `${n} ${w}${n === 1 ? "" : "s"}`; }
+function freqText(t) { return t.frequency > 0 ? `Every ${plural(t.frequency, "month")}` : "One-time training"; }
+
+// ---------- model: the compliance logic ----------
+function compute(data) {
+  const now = today();
+  const staff = data.staff.filter(s => s.status !== "Former").sort((a, b) => a.name.localeCompare(b.name));
+  const trainings = [...data.trainings].sort((a, b) =>
+    (a.roles.includes("All Staff") ? 0 : 1) - (b.roles.includes("All Staff") ? 0 : 1) || a.name.localeCompare(b.name));
+
+  const latest = new Map();
+  for (const r of data.records) {
+    if (!r.employeeId || !r.trainingId || !r.completed) continue;
+    const key = r.employeeId + "|" + r.trainingId;
+    const prev = latest.get(key);
+    if (!prev || r.completed > prev.completed) latest.set(key, r);
+  }
+
+  const cells = {};
+  const items = [];
+  for (const s of staff) {
+    cells[s.id] = {};
+    for (const t of trainings) {
+      const applies = t.roles.includes("All Staff") || (s.role && t.roles.includes(s.role));
+      let c;
+      if (!applies) c = { status: "na" };
+      else {
+        const rec = latest.get(s.id + "|" + t.id) || null;
+        if (!rec) c = { status: "missing", rec: null, due: null, days: null };
+        else {
+          const done = parseDate(rec.completed);
+          const due = t.frequency > 0 ? addMonths(done, t.frequency) : null;
+          const days = due ? dayDiff(due, now) : null;
+          const status = due == null ? "ok" : days < 0 ? "late" : days <= DUE_SOON_DAYS ? "soon" : "ok";
+          c = { status, rec, done, due, days, needsSignoff: !rec.signed };
+        }
+        c.staff = s; c.training = t;
+        items.push(c);
+      }
+      cells[s.id][t.id] = c;
+    }
+  }
+
+  const perStaff = staff.map(s => {
+    const mine = items.filter(i => i.staff === s);
+    const count = k => mine.filter(i => i.status === k).length;
+    return { s, mine, total: mine.length, ok: count("ok"), soon: count("soon"), late: count("late"), missing: count("missing") };
+  });
+
+  return { staff, trainings, cells, items, perStaff, now };
+}
+
+// ---------- detail text ----------
+function detail(c) {
+  if (c.status === "missing") return "Not yet completed";
+  if (c.status === "late") return `Overdue ${-c.days}d · due ${fmt(c.due)}`;
+  if (c.status === "soon") return c.days === 0 ? `Due today · ${fmt(c.due)}` : `Due in ${c.days}d · ${fmt(c.due)}`;
+  if (c.due) return `Completed ${fmt(c.done)} · next due ${fmt(c.due)}`;
+  return `Completed ${fmt(c.done)} (one-time)`;
+}
+
+// ---------- views ----------
+function viewOverview(m) {
+  const n = m.staff.length;
+  const full = m.perStaff.filter(p => p.total > 0 && p.ok === p.total).length;
+  const nonCompliant = m.perStaff.filter(p => p.late + p.missing > 0).length;
+  const actionOnly = m.perStaff.filter(p => p.late + p.missing === 0 && p.soon > 0).length;
+  const soon = m.items.filter(i => i.status === "soon").length;
+  const late = m.items.filter(i => i.status === "late").length;
+  const valid = m.items.filter(i => i.status === "ok" || i.status === "soon").length;
+  const pct = m.items.length ? Math.round(valid / m.items.length * 100) : 0;
+  const pending = m.items.filter(i => i.rec && i.needsSignoff);
+
+  const head = m.trainings.map(t => `<th class="col" scope="col" title="${esc(t.name)}"><span>${esc(t.name)}</span></th>`).join("");
+  const rows = m.staff.map(s => `<tr>
+      <td class="who"><button class="rowbtn" data-emp="${esc(s.id)}">${avatar(s.name)}<span><span class="nm">${esc(s.name)}</span><br><span class="role">${esc(s.role || "No role")}</span></span></button></td>
+      ${m.trainings.map(t => { const c = m.cells[s.id][t.id];
+        const tip = c.status === "na" ? `${t.name}: not applicable` : `${t.name}: ${STATUS[c.status].label} — ${detail(c)}`;
+        return `<td><span class="cell st-${c.status}" title="${esc(tip)}" role="img" aria-label="${esc(tip)}"></span></td>`; }).join("")}
+    </tr>`).join("");
+
+  return `
+  <section class="stats" aria-label="Summary">
+    <div class="stat"><span class="k">Staff tracked</span><span class="v">${n}</span><span class="s">${plural(m.trainings.length, "training")} tracked</span></div>
+    <div class="stat"><span class="k">Fully compliant</span><span class="v ok">${full}</span><span class="s">${nonCompliant} non-compliant · ${actionOnly} action needed</span></div>
+    <div class="stat"><span class="k">Needs action soon</span><span class="v soon">${soon}</span><span class="s">Due within ${DUE_SOON_DAYS} days${late ? ` · ${late} overdue` : ", nothing overdue"}</span></div>
+    <div class="stat"><span class="k">Overall completion rate</span><span class="v miss">${pct}%</span><span class="s">${valid} of ${m.items.length} tracked items</span></div>
+  </section>
+
+  <section class="panel">
+    <h2>Training compliance heatmap</h2>
+    <p class="sub">Every staff member × every applicable training. Click a name to open that person.</p>
+    <div class="legend">
+      <span><i class="sw st-ok"></i>Compliant</span><span><i class="sw st-soon"></i>Due soon</span>
+      <span><i class="sw st-late"></i>Overdue</span><span><i class="sw st-missing"></i>Not completed</span>
+      <span><i class="sw" style="border:1px dashed var(--na)"></i>Not applicable</span>
+    </div>
+    <div class="scroll-x"><table class="heat"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+  </section>
+
+  ${pending.length ? `<section class="panel">
+    <h2>Waiting for manager sign-off</h2>
+    <p class="sub">Completed, but no manager sign-off date in Notion yet.</p>
+    <div class="people">${pending.map(i => {
+      const u = safeUrl(i.rec.url); const tag = u ? "a" : "div";
+      return `<${tag} class="person"${u ? ` href="${esc(u)}" target="_blank" rel="noopener"` : ""}><span class="l">${avatar(i.staff.name)}<span><span class="nm">${esc(i.staff.name)}</span><br><span class="role">${esc(i.training.name)}</span></span></span><span class="d">Completed ${fmt(i.done)}</span></${tag}>`;
+    }).join("")}</div>
+  </section>` : ""}`;
+}
+
+function itemCard(c, titleText) {
+  const u = c.rec ? safeUrl(c.rec.url) : null;
+  const tag = u ? "a" : "div";
+  return `<${tag} class="item k-${c.status}"${u ? ` href="${esc(u)}" target="_blank" rel="noopener"` : ""}>
+    <span class="t">${esc(titleText)}</span><span class="d">${esc(detail(c))}</span>
+    ${c.rec && c.needsSignoff ? `<span class="chip">Awaiting sign-off</span>` : ""}
+  </${tag}>`;
+}
+
+function groups(list, renderOne) {
+  const order = ["missing", "late", "soon", "ok"];
+  return order.map(k => {
+    const g = list.filter(c => c.status === k);
+    if (!g.length) return "";
+    return `<div class="group"><h3><i class="sw st-${k}"></i>${STATUS[k].label} (${g.length})</h3>${renderOne(g)}</div>`;
+  }).join("");
+}
+
+function viewEmployees(m) {
+  if (!m.staff.length) return `<p class="empty">No active staff in the Team database yet.</p>`;
+  if (!state.emp || !m.cells[state.emp]) state.emp = m.staff[0].id;
+  const p = m.perStaff.find(x => x.s.id === state.emp);
+  const s = p.s;
+  const pct = p.total ? Math.round((p.ok + p.soon) / p.total * 100) : 0;
+  const opts = m.staff.map(x => `<option value="${esc(x.id)}"${x.id === s.id ? " selected" : ""}>${esc(x.name)}</option>`).join("");
+  const sorted = [...p.mine].sort((a, b) => a.training.name.localeCompare(b.training.name));
+  return `
+  <div class="pick"><label for="empSelect">Staff member</label><select id="empSelect">${opts}</select></div>
+  <section class="panel">
+    <div class="profile">${avatar(s.name, true)}<div><h2>${esc(s.name)}</h2><div class="role">${esc(s.role || "No role")}${s.hireDate ? ` · hired ${fmt(parseDate(s.hireDate))}` : ""}</div></div></div>
+    <div class="facts"><span><b>${p.total}</b> trainings tracked</span><span><b>${p.ok}</b> on track</span><span><b>${p.soon + p.late + p.missing}</b> need attention</span><span><b>${pct}%</b> completion rate</span></div>
+    ${p.total ? groups(sorted, g => `<div class="items">${g.map(c => itemCard(c, c.training.name)).join("")}</div>`) : `<p class="empty">No trainings apply to this role.</p>`}
+  </section>`;
+}
+
+function viewTrainings(m) {
+  if (!m.trainings.length) return `<p class="empty">No trainings in the Trainings database yet.</p>`;
+  if (!state.trn || !m.trainings.some(t => t.id === state.trn)) state.trn = m.trainings[0].id;
+  const t = m.trainings.find(x => x.id === state.trn);
+  const list = m.items.filter(i => i.training === t).sort((a, b) => a.staff.name.localeCompare(b.staff.name));
+  const count = k => list.filter(i => i.status === k).length;
+  const opts = m.trainings.map(x => `<option value="${esc(x.id)}"${x.id === t.id ? " selected" : ""}>${esc(x.name)}</option>`).join("");
+  const appliesTo = t.roles.includes("All Staff") ? "all staff" : t.roles.join(", ") || "no roles";
+  return `
+  <div class="pick"><label for="trnSelect">Training</label><select id="trnSelect">${opts}</select></div>
+  <section class="panel">
+    <div><h2>${esc(t.name)}</h2><div class="role">${esc(freqText(t))} · for ${esc(appliesTo)} · applies to ${list.length} of ${m.staff.length} staff${t.category ? ` · ${esc(t.category)}` : ""}</div></div>
+    <div class="facts"><span><b>${count("ok")}</b> on track</span><span><b>${count("soon")}</b> due soon</span><span><b>${count("late")}</b> overdue</span><span><b>${count("missing")}</b> not completed</span></div>
+    ${list.length ? groups(list, g => `<div class="people">${g.map(c => {
+      const u = c.rec ? safeUrl(c.rec.url) : null; const tag = u ? "a" : "div";
+      return `<${tag} class="person"${u ? ` href="${esc(u)}" target="_blank" rel="noopener"` : ""}><span class="l">${avatar(c.staff.name)}<span><span class="nm">${esc(c.staff.name)}</span><br><span class="role">${esc(c.staff.role || "")}</span></span></span><span class="d">${esc(detail(c))}${c.rec && c.needsSignoff ? " · awaiting sign-off" : ""}</span></${tag}>`;
+    }).join("")}</div>`) : `<p class="empty">This training doesn't apply to any current staff.</p>`}
+  </section>`;
+}
+
+function viewCalendar(m) {
+  const now = m.now;
+  if (!state.calMonth) state.calMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const month = state.calMonth;
+  const dated = m.items.filter(i => i.due);
+  const within = d => dated.filter(i => i.days >= 0 && i.days <= d).length;
+  const late = dated.filter(i => i.days < 0);
+
+  const f = state.calFilter;
+  const inFilter = i =>
+    f === "late" ? i.days < 0 :
+    f === "30" ? i.days >= 0 && i.days <= 30 :
+    f === "60" ? i.days >= 0 && i.days <= 60 :
+    f === "90" ? i.days >= 0 && i.days <= 90 : true;
+  const shown = dated.filter(inFilter);
+
+  const byDay = new Map();
+  for (const i of shown) { const k = iso(i.due); if (!byDay.has(k)) byDay.set(k, []); byDay.get(k).push(i); }
+
+  const first = new Date(month.getFullYear(), month.getMonth(), 1);
+  const start = new Date(first); start.setDate(1 - first.getDay());
+  let cellsHtml = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d => `<div class="dow">${d}</div>`).join("");
+  for (let k = 0; k < 42; k++) {
+    const d = new Date(start); d.setDate(start.getDate() + k);
+    if (k >= 35 && d.getMonth() !== month.getMonth()) break;
+    const evs = byDay.get(iso(d)) || [];
+    const out = d.getMonth() !== month.getMonth();
+    const isToday = iso(d) === iso(now);
+    cellsHtml += `<div class="day${out ? " out" : ""}${isToday ? " today" : ""}"><span class="n">${d.getDate()}</span><div class="evs">${
+      evs.slice(0, 3).map(i => `<span class="ev k-${i.status}" title="${esc(`${i.staff.name} — ${i.training.name}: ${detail(i)}`)}">${esc(i.staff.name.split(" ")[0])} · ${esc(i.training.name)}</span>`).join("")
+    }${evs.length > 3 ? `<span class="more">+${evs.length - 3} more</span>` : ""}</div></div>`;
+  }
+
+  const inMonth = i => i.due.getMonth() === month.getMonth() && i.due.getFullYear() === month.getFullYear();
+  const agendaList = (f === "all" ? shown.filter(inMonth) : shown).sort((a, b) => a.due - b.due);
+  const monthName = month.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+  const fb = (k, label) => `<button data-filter="${k}" aria-pressed="${f === k}">${label}</button>`;
+
+  return `
+  <section class="stats" aria-label="Upcoming">
+    <div class="stat"><span class="k">Overdue</span><span class="v late">${late.length}</span><span class="s">Past their due date</span></div>
+    <div class="stat"><span class="k">Due in 7 days</span><span class="v soon">${within(7)}</span><span class="s">By ${fmt(new Date(now.getTime() + 7 * 864e5))}</span></div>
+    <div class="stat"><span class="k">Due in 30 days</span><span class="v soon">${within(30)}</span><span class="s">By ${fmt(new Date(now.getTime() + 30 * 864e5))}</span></div>
+    <div class="stat"><span class="k">Due in 90 days</span><span class="v miss">${within(90)}</span><span class="s">By ${fmt(new Date(now.getTime() + 90 * 864e5))}</span></div>
+  </section>
+  <section class="panel">
+    <div class="calbar">
+      <div class="calnav">
+        <button class="btn" data-cal="prev" aria-label="Previous month">‹</button>
+        <h2>${esc(monthName)}</h2>
+        <button class="btn" data-cal="next" aria-label="Next month">›</button>
+        <button class="btn" data-cal="today">Today</button>
+      </div>
+      <div class="filters" role="group" aria-label="Filter">${fb("all","All")}${fb("late","Overdue")}${fb("30","Next 30d")}${fb("60","Next 60d")}${fb("90","Next 90d")}</div>
+    </div>
+    <div class="cal">${cellsHtml}</div>
+  </section>
+  <section class="panel">
+    <h2>${f === "all" ? `Due in ${esc(monthName)}` : f === "late" ? "Overdue" : `Due in the next ${f} days`}</h2>
+    ${agendaList.length ? `<div class="agenda">${agendaList.map(i => {
+      const u = i.rec ? safeUrl(i.rec.url) : null; const tag = u ? "a" : "div";
+      return `<${tag} class="row"${u ? ` href="${esc(u)}" target="_blank" rel="noopener"` : ""}><span class="date">${fmt(i.due)}</span><span class="what"><b>${esc(i.staff.name)}</b> · ${esc(i.training.name)}</span><span class="badge k-${i.status}">${i.status === "late" ? `${-i.days}d late` : i.status === "soon" ? `in ${i.days}d` : "On track"}</span></${tag}>`;
+    }).join("")}</div>` : `<p class="empty">Nothing due ${f === "all" ? "this month" : "in this range"}.</p>`}
+  </section>`;
+}
+
+// ---------- render ----------
+function render() {
+  document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === state.tab)));
+  if (!state.model) return;
+  const v = $("view");
+  const html = state.tab === "employees" ? viewEmployees(state.model)
+    : state.tab === "trainings" ? viewTrainings(state.model)
+    : state.tab === "calendar" ? viewCalendar(state.model)
+    : viewOverview(state.model);
+  v.innerHTML = html;
+}
+
+function setTab(tab) {
+  state.tab = tab;
+  try { history.replaceState(null, "", "#" + tab); } catch {}
+  render();
+}
+
+document.addEventListener("click", (e) => {
+  const tab = e.target.closest("[data-tab]");
+  if (tab) return setTab(tab.dataset.tab);
+  const emp = e.target.closest("[data-emp]");
+  if (emp) { state.emp = emp.dataset.emp; return setTab("employees"); }
+  const cal = e.target.closest("[data-cal]");
+  if (cal) {
+    const m = state.calMonth;
+    if (cal.dataset.cal === "prev") state.calMonth = new Date(m.getFullYear(), m.getMonth() - 1, 1);
+    if (cal.dataset.cal === "next") state.calMonth = new Date(m.getFullYear(), m.getMonth() + 1, 1);
+    if (cal.dataset.cal === "today") { const n = today(); state.calMonth = new Date(n.getFullYear(), n.getMonth(), 1); }
+    return render();
+  }
+  const fl = e.target.closest("[data-filter]");
+  if (fl) { state.calFilter = fl.dataset.filter; return render(); }
+});
+document.addEventListener("change", (e) => {
+  if (e.target.id === "empSelect") { state.emp = e.target.value; render(); }
+  if (e.target.id === "trnSelect") { state.trn = e.target.value; render(); }
+});
+document.addEventListener("submit", (e) => {
+  if (e.target.id === "pwForm") {
+    e.preventDefault();
+    state.password = $("pw").value;
+    try { sessionStorage.setItem("dash-pw", state.password); } catch {}
+    load();
+  }
+});
+
+// ---------- data loading ----------
+function setFresh(kind, text) {
+  $("dot").className = "dot" + (kind === "ok" ? "" : kind === "warn" ? " warn" : " err");
+  $("freshText").innerHTML = text;
+}
+
+function showPasswordGate(wrong) {
+  $("view").innerHTML = `<form class="notice" id="pwForm">
+    <h2>Enter the dashboard password</h2>
+    <label for="pw">Password</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    ${wrong ? `<span class="err">That password didn't work. Check it and try again.</span>` : ""}
+    <button class="primary" type="submit">Open dashboard</button>
+  </form>`;
+  setFresh("warn", "Password required");
+}
+
+function accept(data) {
+  state.data = data;
+  state.model = compute(data);
+  render();
+}
+
+async function load() {
+  if (SNAPSHOT) {
+    accept(SNAPSHOT);
+    const at = new Date(SNAPSHOT.generatedAt);
+    setFresh("warn", `Preview · snapshot of Notion taken ${esc(fmt(at))}, ${esc(at.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }))}. The deployed app reads Notion live.`);
+    return;
+  }
+  try {
+    const headers = state.password ? { "x-dashboard-password": state.password } : {};
+    const r = await fetch("/api/dashboard", { headers, cache: "no-store" });
+    if (r.status === 401) return showPasswordGate(!!state.password);
+    const body = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(body.message || "Couldn't load data from Notion.");
+    accept(body);
+    setFresh("ok", `Live from Notion · updated ${esc(new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }))} · refreshes every minute`);
+  } catch (err) {
+    if (state.model) setFresh("err", `Couldn't refresh · showing data from earlier. ${esc(err.message)}`);
+    else {
+      setFresh("err", "Couldn't load data");
+      $("view").innerHTML = `<div class="notice"><h2>The dashboard couldn't reach Notion.</h2><p>${esc(err.message)}</p><button class="primary" type="button" id="retry">Try again</button></div>`;
+      $("retry").addEventListener("click", load);
+    }
+  }
+}
+
+(function start() {
+  const h = (location.hash || "").slice(1);
+  if (["overview", "employees", "trainings", "calendar"].includes(h)) state.tab = h;
+  try { state.password = sessionStorage.getItem("dash-pw"); } catch {}
+  render();
   load();
-  setInterval(load, 60000); // re-read Notion every minute
+  if (!SNAPSHOT) setInterval(() => { if (document.visibilityState === "visible") load(); }, REFRESH_MS);
+  document.addEventListener("visibilitychange", () => { if (!SNAPSHOT && document.visibilityState === "visible") load(); });
+})();
 </script>
-</body>
+
 </html>
