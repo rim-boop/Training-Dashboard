@@ -2,6 +2,7 @@
 //
 //   GET  /api/onboarding?key=K                -> my own onboarding checklist (New hire tasks)
 //   GET  /api/onboarding?key=K&view=team      -> everyone being onboarded (managers and admins)
+//   GET  /api/onboarding?key=K&task=TASK_ID   -> one task with its description (the Library task's page content)
 //   POST /api/onboarding {key, action:"start", personId}            -> create that person's tasks from the Task Library
 //   POST /api/onboarding {key, action:"done" | "undo", taskId}       -> tick or untick one task
 //
@@ -14,7 +15,7 @@
 import {
   PROPS, FOR_HR, FOR_NEW_HIRE, queryAll, createPage, getPage, updatePage, toStaff,
   toLibraryTask, toOnboardTask, libraryApplies, addDays, taskState, sortTasks,
-  canManageOnboarding, onboardingEnabled, findPerson, todayIn, sendNotionError,
+  canManageOnboarding, onboardingEnabled, findPerson, todayIn, sendNotionError, lessonBlocks,
 } from "./_lib.js";
 
 const O = PROPS.onboardTasks;
@@ -26,7 +27,7 @@ function publicTask(t, today, nameById) {
   return {
     id: t.id, name: t.name, for: t.for, phase: t.phase, owner: t.owner, category: t.category,
     due: t.due, doneOn: t.doneOn, doneBy: t.doneBy ? nameById?.get(t.doneBy) || null : null,
-    notes: t.notes, link: t.link, state: taskState(t, today),
+    notes: t.notes, link: t.link, state: taskState(t, today), hasLibrary: !!t.libraryId,
   };
 }
 
@@ -115,6 +116,26 @@ export default async function handler(req, res) {
     }
 
     if (req.method !== "GET") return res.status(405).json({ error: "method_not_allowed" });
+
+    // ---------- one task + its description ----------
+    if (req.query.task) {
+      const taskId = req.query.task;
+      if (typeof taskId !== "string" || !ID_RE.test(taskId)) return res.status(400).json({ error: "bad_request", message: "That task couldn't be found." });
+      const page = await getPage(taskId);
+      if (!sameId(page.parent?.database_id, process.env.ONBOARD_TASKS_DB) || page.archived || page.in_trash) return res.status(404).json({ error: "not_found", message: "That task couldn't be found." });
+      const task = toOnboardTask(page);
+      const own = sameId(task.memberId, actor.id);
+      const allowed = (own && task.for === FOR_NEW_HIRE) || actor.isManager || actor.isAdmin;
+      if (!allowed) return res.status(403).json({ error: "not_allowed", message: "This task isn't yours." });
+      let canTick = own && task.for === FOR_NEW_HIRE;
+      if (!canTick && task.memberId) canTick = canManageOnboarding(actor, await loadMember(task.memberId));
+      // Description = the Library task's page body. A description written on the person's own task row is added after it.
+      const [libBlocks, ownBlocks] = await Promise.all([
+        task.libraryId ? lessonBlocks(task.libraryId).catch(() => []) : Promise.resolve([]),
+        lessonBlocks(task.id).catch(() => []),
+      ]);
+      return res.status(200).json({ task: { ...publicTask(task, today), canTick }, blocks: [...libBlocks, ...ownBlocks] });
+    }
 
     // ---------- team view ----------
     if (req.query.view === "team") {

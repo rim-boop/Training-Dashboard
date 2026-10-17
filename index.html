@@ -227,6 +227,13 @@
   .tag { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
   .tag.hr { background: var(--late-soft); color: var(--late); } .tag.nh { background: var(--retake-soft); color: var(--retake); }
   .tag.late { background: var(--late); color: #fff; } .tag.soon { background: var(--soon-soft); color: var(--soon); }
+  .task .tn button { border: 0; background: none; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+  .task .tn button:hover { color: var(--accent); text-decoration: underline; }
+  .desc { grid-column: 2 / -1; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; font-size: 14px; }
+  .desc > * { margin: 0; } .desc ul, .desc ol { padding-left: 1.3em; margin: 0; }
+  .desc h4, .desc h5 { margin: 0; font: 600 15px/1.3 var(--display); }
+  .desc .call { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; }
+  .desc img { max-width: 100%; border-radius: 6px; }
 </style>
 
 <div class="wrap">
@@ -273,7 +280,7 @@ const STATUS = {
 };
 
 const state = { data: null, model: null, tab: "overview", emp: null, trn: null, calMonth: null, calFilter: "all", password: null, key: "", confirming: null, signing: null,
-  onb: null, onbSel: null, onbFor: "all", onbOpen: true, onbBusy: {}, onbStarting: null, onbErr: null, onbKeep: new Set() };
+  onb: null, onbSel: null, onbFor: "all", onbOpen: true, onbBusy: {}, onbStarting: null, onbErr: null, onbKeep: new Set(), onbDesc: {} };
 const $ = (id) => document.getElementById(id);
 
 // ---------- helpers ----------
@@ -594,7 +601,7 @@ function viewOnboarding() {
   </section>
   <section class="panel">
     <h2>New hires</h2>
-    <p class="sub">Tasks come from the Onboarding Task Library in Notion. Click someone to see their checklist.</p>
+    <p class="sub">Tasks come from the Onboarding Task Library in Notion. Click someone to see their checklist, and a task name to read its description.</p>
     ${list}
   </section>
   ${sel ? onboardingDetail(sel) : ""}`;
@@ -638,9 +645,61 @@ function taskRow(t, p) {
   const st = t.doneOn ? "" : t.state === "late" ? `<span class="tag late">Overdue</span>` : t.state === "soon" ? `<span class="tag soon">Due soon</span>` : "";
   return `<div class="task${t.doneOn ? " is-done" : ""}">
     <input type="checkbox" data-onb-task="${esc(t.id)}" data-person="${esc(p.id)}" ${t.doneOn ? "checked" : ""} ${!p.canManage || busy ? "disabled" : ""} aria-label="${esc(t.name)}">
-    <div><div class="tn">${esc(t.name)}</div><div class="tm">${meta}${t.notes ? ` · ${esc(t.notes)}` : ""}</div></div>
+    <div><div class="tn"><button type="button" data-onb-desc="${esc(t.id)}" aria-expanded="${!!state.onbDesc[t.id]}">${esc(t.name)}</button></div><div class="tm">${meta}${t.notes ? ` · ${esc(t.notes)}` : ""}</div></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${st}<span class="tag ${t.for === "HR & Compliance" ? "hr" : "nh"}">${t.for === "HR & Compliance" ? "HR" : "New hire"}</span></div>
+    ${state.onbDesc[t.id] ? `<div class="desc">${state.onbDesc[t.id] === "loading" ? `<span class="link">Loading description…</span>` : state.onbDesc[t.id]}</div>` : ""}
   </div>`;
+}
+
+// Notion blocks -> simple HTML for task descriptions
+function rtx(arr) {
+  return (arr || []).map(t => {
+    let h = esc(t.text).replace(/\n/g, "<br>");
+    if (t.code) h = `<code>${h}</code>`; if (t.b) h = `<strong>${h}</strong>`; if (t.i) h = `<em>${h}</em>`; if (t.s) h = `<s>${h}</s>`;
+    if (t.href && safeUrl(t.href)) h = `<a href="${esc(t.href)}" target="_blank" rel="noopener">${h}</a>`;
+    return h;
+  }).join("");
+}
+function descBlocks(list) {
+  let out = "", i = 0;
+  while (i < (list || []).length) {
+    const b = list[i];
+    if (b.type === "bulleted_list_item" || b.type === "numbered_list_item") {
+      const tag = b.type === "bulleted_list_item" ? "ul" : "ol"; out += `<${tag}>`;
+      while (i < list.length && list[i].type === b.type) { out += `<li>${rtx(list[i].text)}${descBlocks(list[i].children)}</li>`; i++; }
+      out += `</${tag}>`; continue;
+    }
+    const kids = descBlocks(b.children);
+    switch (b.type) {
+      case "paragraph": out += b.text && b.text.length ? `<p>${rtx(b.text)}</p>${kids}` : ""; break;
+      case "heading_1": case "heading_2": out += `<h4>${rtx(b.text)}</h4>`; break;
+      case "heading_3": out += `<h5>${rtx(b.text)}</h5>`; break;
+      case "to_do": out += `<p>${b.checked ? "☑" : "☐"} ${rtx(b.text)}</p>${kids}`; break;
+      case "callout": out += `<div class="call">${b.icon ? esc(b.icon) + " " : ""}${rtx(b.text)}${kids}</div>`; break;
+      case "toggle": out += `<details><summary>${rtx(b.text)}</summary>${kids}</details>`; break;
+      case "quote": out += `<blockquote>${rtx(b.text)}${kids}</blockquote>`; break;
+      case "divider": out += "<hr>"; break;
+      case "column_list": out += (b.children || []).map(c => descBlocks(c.children)).join(""); break;
+      case "image": out += safeUrl(b.src) ? `<img src="${esc(b.src)}" alt="">` : ""; break;
+      case "bookmark": case "embed": case "video": case "pdf": case "file": case "link_preview":
+        out += safeUrl(b.href) ? `<p><a href="${esc(b.href)}" target="_blank" rel="noopener">${b.caption && b.caption.length ? rtx(b.caption) : "Open the attachment"} ↗</a></p>` : ""; break;
+      default: out += kids;
+    }
+    i++;
+  }
+  return out;
+}
+async function toggleDesc(id) {
+  if (state.onbDesc[id]) { delete state.onbDesc[id]; return render(); }
+  state.onbDesc[id] = "loading"; render();
+  try {
+    const r = await fetch(`/api/onboarding?key=${encodeURIComponent(state.key)}&task=${encodeURIComponent(id)}`, { cache: "no-store" });
+    const res = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(res.message || "Couldn't load the description.");
+    const html = descBlocks(res.blocks);
+    state.onbDesc[id] = html || `<span class="link">No description yet. Add one in the body of this task's page in the Onboarding Task Library.</span>`;
+  } catch (e) { state.onbDesc[id] = `<span class="link">${esc(e.message)}</span>`; }
+  render();
 }
 
 async function loadOnboarding() {
@@ -736,6 +795,8 @@ document.addEventListener("click", (e) => {
   if (of) { state.onbFor = of.dataset.onbFor; state.onbKeep.clear(); return render(); }
   const oo = e.target.closest("[data-onb-open]");
   if (oo) { state.onbOpen = oo.dataset.onbOpen === "1"; state.onbKeep.clear(); return render(); }
+  const od = e.target.closest("[data-onb-desc]");
+  if (od) return toggleDesc(od.dataset.onbDesc);
   const os = e.target.closest("[data-onb-start]");
   if (os) return startOnboarding(os.dataset.onbStart);
   if (e.target.closest("[data-onb-reload]")) { state.onbErr = null; render(); return loadOnboarding(); }

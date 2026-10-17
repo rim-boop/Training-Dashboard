@@ -158,6 +158,11 @@
   .ob-task.done .tn { color: var(--muted); text-decoration: line-through; }
   .ob-task .tm { font: 12.5px/1.5 var(--mono); color: var(--muted); }
   .ob-task .tm .late { color: var(--late); font-weight: 500; }
+  .ob-task { cursor: default; align-items: center; }
+  .ob-open { flex: 1; min-width: 0; border: 0; background: none; padding: 0; text-align: left; cursor: pointer; display: grid; gap: 2px; font: inherit; color: inherit; }
+  .ob-open:hover .tn { color: var(--accent); }
+  .ob-task .chev { color: var(--muted); font-size: 22px; line-height: 1; flex: none; }
+  .ob-meta { display: flex; flex-wrap: wrap; gap: 6px; }
   .ob-trn { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 14px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); flex-wrap: wrap; }
 </style>
 </head>
@@ -266,13 +271,14 @@ function renderOnboarding() {
     <div class="ob-top">
       <div class="big">${mine.done === mine.total ? "You've finished your onboarding checklist 🎉" : `${mine.done} of ${mine.total} done`}</div>
       <div class="bar"><i style="width:${pct}%"></i></div>
-      <div class="note">${ob.hireDate ? `Your start date: ${fmt(ob.hireDate)}. ` : ""}${mine.late ? `<b style="color:var(--late)">${mine.late} overdue.</b> ` : ""}Tick each item when it's done.${hr.total ? ` HR has finished ${hr.done} of ${hr.total} things on their side.` : ""}</div>
+      <div class="note">${ob.hireDate ? `Your start date: ${fmt(ob.hireDate)}. ` : ""}${mine.late ? `<b style="color:var(--late)">${mine.late} overdue.</b> ` : ""}Tap a task for its details, tick it when it's done.${hr.total ? ` HR has finished ${hr.done} of ${hr.total} things on their side.` : ""}</div>
     </div>
     ${phases.map(ph => `<div class="ob-phase"><h3>${esc(ph)}</h3>${ob.tasks.filter(t => (t.phase || "Other") === ph).map(t => `
-      <label class="ob-task${t.doneOn ? " done" : ""}${!t.doneOn && t.state === "late" ? " late" : ""}">
-        <input type="checkbox" data-ob="${esc(t.id)}" ${t.doneOn ? "checked" : ""} ${obBusy[t.id] ? "disabled" : ""}>
-        <span><span class="tn">${esc(t.name)}</span><br><span class="tm">${obLine(t)}${t.link ? ` · <a href="${esc(t.link)}" target="_blank" rel="noopener">Open link</a>` : ""}</span>${t.notes ? `<br><span class="note">${esc(t.notes)}</span>` : ""}</span>
-      </label>`).join("")}</div>`).join("")}`;
+      <div class="ob-task${t.doneOn ? " done" : ""}${!t.doneOn && t.state === "late" ? " late" : ""}">
+        <input type="checkbox" data-ob="${esc(t.id)}" ${t.doneOn ? "checked" : ""} ${obBusy[t.id] ? "disabled" : ""} aria-label="Done: ${esc(t.name)}">
+        <button class="ob-open" type="button" data-obtask="${esc(t.id)}"><span class="tn">${esc(t.name)}</span><span class="tm">${obLine(t)}</span></button>
+        <span class="chev" aria-hidden="true">›</span>
+      </div>`).join("")}</div>`).join("")}`;
 }
 function applyView() {
   const hasOb = !!(ob && ob.tasks.length);
@@ -316,6 +322,50 @@ async function tickOb(box) {
   }
   delete obBusy[t.id];
   await loadOnboarding();
+}
+
+async function openObTask(id) {
+  showDetail(`${backBtn}<div class="skeleton"></div>`);
+  try {
+    const r = await fetch(`/api/onboarding?key=${encodeURIComponent(key)}&task=${encodeURIComponent(id)}`, { cache: "no-store" });
+    const res = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(res.message || "Couldn't open this task.");
+    const t = res.task;
+    todoCount = 0;
+    const body = blocks(res.blocks || []);
+    const chips = [t.phase, t.due ? `Due ${fmt(t.due)}` : "No due date", t.category].filter(Boolean);
+    showDetail(`${backBtn}
+      <div class="lesson-head">
+        <div class="eyebrow">Onboarding task</div>
+        <h2>${esc(t.name)}</h2>
+        <div class="chips">${chips.map(c => `<span class="chip">${esc(c)}</span>`).join("")}${t.doneOn ? `<span class="pill k-ok">Done</span>` : t.state === "late" ? `<span class="pill k-late">Overdue</span>` : ""}</div>
+      </div>
+      <article class="doc">${body || `<p class="note">There's no description for this task yet. Ask your manager if anything is unclear.</p>`}
+        ${t.notes ? `<p class="note">${esc(t.notes)}</p>` : ""}
+        ${t.link ? `<p><a class="btn" href="${esc(t.link)}" target="_blank" rel="noopener">Open the link ↗</a></p>` : ""}
+      </article>
+      <div class="finish">
+        ${t.doneOn ? `<h3>Done</h3><div class="note">Ticked off on ${fmt(t.doneOn)}${t.doneBy ? ` by ${esc(t.doneBy)}` : ""}.</div>
+          <div class="actions"><button class="btn" type="button" data-obmark="${esc(t.id)}" data-done="0">Mark as not done</button></div>`
+        : `<h3>Finished this one?</h3><div class="err" id="obErr" role="alert"></div>
+          <div class="actions"><button class="btn primary" type="button" data-obmark="${esc(t.id)}" data-done="1">Mark as done</button></div>`}
+      </div>`);
+    wireTodos("ob-" + t.id);
+  } catch (e) {
+    showDetail(`${backBtn}<div class="empty">${esc(e.message)}</div>`);
+  }
+}
+async function markObFromDetail(btn) {
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    const r = await fetch("/api/onboarding", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, taskId: btn.dataset.obmark, action: btn.dataset.done === "1" ? "done" : "undo" }) });
+    const res = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(res.message || "That couldn't be saved.");
+    view = "onboarding"; goHome();
+  } catch (e) {
+    const el = $("obErr"); if (el) el.textContent = e.message + " Please try again.";
+    btn.disabled = false; btn.textContent = btn.dataset.done === "1" ? "Mark as done" : "Mark as not done";
+  }
 }
 
 // ---------- lesson rendering (Notion blocks) ----------
@@ -429,7 +479,7 @@ function wireTodos(trainingId) {
   boxes.forEach(b => { b.checked = !!saved[b.dataset.todo]; });
   const update = () => {
     const done = boxes.filter(b => b.checked).length, pct = Math.round(done / boxes.length * 100);
-    $("pct").textContent = pct + "%"; $("barFill").style.width = pct + "%";
+    if ($("pct")) { $("pct").textContent = pct + "%"; $("barFill").style.width = pct + "%"; }
   };
   boxes.forEach(b => b.addEventListener("change", () => { const s = store(k) || {}; s[b.dataset.todo] = b.checked; store(k, s); update(); }));
   update();
@@ -522,6 +572,8 @@ document.addEventListener("click", (e) => {
   const c = e.target.closest("[data-confirm]"); if (c) return confirmRead(c.dataset.confirm);
   if (e.target.closest("[data-back]")) return goHome();
   const v = e.target.closest("[data-view]"); if (v) { view = v.dataset.view; return applyView(); }
+  const ot = e.target.closest("[data-obtask]"); if (ot) return openObTask(ot.dataset.obtask);
+  const om = e.target.closest("[data-obmark]"); if (om) return markObFromDetail(om);
 });
 document.addEventListener("change", (e) => { if (e.target.matches("[data-ob]")) tickOb(e.target); });
 
