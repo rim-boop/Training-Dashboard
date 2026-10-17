@@ -141,16 +141,41 @@
   .mark.r { background: var(--ok-soft); color: var(--ok); } .mark.w { background: var(--retake-soft); color: var(--retake); }
   .empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; padding: 20px; color: var(--muted); }
   .skeleton { height: 96px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+  /* onboarding */
+  .switch { display: inline-flex; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; justify-self: start; }
+  .switch button { border: 0; background: transparent; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--muted); font-size: 15px; }
+  .switch button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .switch .n { font: 500 12px var(--mono); margin-left: 4px; opacity: .8; }
+  .ob-top { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; }
+  .ob-top .big { font: 600 22px/1.2 var(--display); }
+  .ob-top .bar i { background: var(--ok); }
+  .ob-phase { display: grid; gap: 8px; margin-top: 14px; }
+  .ob-phase h3 { font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0; font-weight: 600; }
+  .ob-task { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); cursor: pointer; }
+  .ob-task.late { border-color: var(--late); }
+  .ob-task input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--ok); flex: none; cursor: pointer; }
+  .ob-task .tn { font-weight: 500; overflow-wrap: anywhere; }
+  .ob-task.done .tn { color: var(--muted); text-decoration: line-through; }
+  .ob-task .tm { font: 12.5px/1.5 var(--mono); color: var(--muted); }
+  .ob-task .tm .late { color: var(--late); font-weight: 500; }
+  .ob-trn { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 14px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); flex-wrap: wrap; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">My trainings</div>
+    <div class="eyebrow" id="eyebrow">My trainings</div>
     <h1 id="hello">Loading your trainings…</h1>
     <div class="role" id="role"></div>
     <div class="fresh"><span class="dot warn" id="dot"></span><span id="freshText">Connecting…</span></div>
   </header>
+
+  <nav class="switch" id="switch" hidden aria-label="Sections">
+    <button type="button" data-view="onboarding" aria-pressed="false">Onboarding<span class="n" id="swOb"></span></button>
+    <button type="button" data-view="trainings" aria-pressed="true">Trainings<span class="n" id="swTr"></span></button>
+  </nav>
+
+  <section id="onboard" hidden></section>
 
   <section id="home">
     <div class="stats" aria-label="Summary">
@@ -170,7 +195,7 @@ const $ = (id) => document.getElementById(id);
 const LABEL = { missing: "To do", retake: "Retake required", update: "New version", late: "Overdue", signoff: "Waiting for sign-off", soon: "Due soon", ok: "Done" };
 const RANK = { retake: 0, update: 1, late: 2, missing: 3, soon: 4, signoff: 5, ok: 6 };
 const ACTIONABLE = new Set(["missing", "retake", "update", "late", "soon"]);
-let data = null, away = false;
+let data = null, away = false, ob = null, view = null, obBusy = {};
 
 function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
 function fmt(iso) { if (!iso) return ""; const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); }
@@ -192,7 +217,7 @@ function line(t) {
 function renderHome() {
   if (!data) return;
   $("hello").textContent = `Hi ${data.person.name.split(" ")[0]}`;
-  $("role").textContent = data.person.role || "";
+  $("role").innerHTML = esc(data.person.role || "") + (data.person.isManager ? `${data.person.role ? " · " : ""}<a href="/?key=${encodeURIComponent(key)}">Open the manager dashboard</a>` : "");
   const list = [...data.trainings].sort((a, b) => RANK[a.status] - RANK[b.status] || (a.due || "9").localeCompare(b.due || "9") || a.name.localeCompare(b.name));
   $("nTodo").textContent = list.filter(t => ACTIONABLE.has(t.status)).length;
   $("nWait").textContent = list.filter(t => t.status === "signoff").length;
@@ -212,6 +237,7 @@ async function loadHome() {
     if (!r.ok) throw new Error(body.message || "Couldn't load your trainings.");
     data = body;
     if (!away) renderHome();
+    applyView();
     setFresh("ok", "Up to date · " + new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }));
   } catch (e) {
     if (data) setFresh("err", "Couldn't refresh · " + e.message);
@@ -219,9 +245,80 @@ async function loadHome() {
   }
 }
 
-function showDetail(html) { away = true; $("home").hidden = true; const d = $("detail"); d.hidden = false; d.innerHTML = html; window.scrollTo(0, 0); }
-function goHome() { away = false; $("detail").hidden = true; $("detail").innerHTML = ""; $("home").hidden = false; renderHome(); loadHome(); }
-const backBtn = `<div><button class="btn" type="button" data-back>← Back to my trainings</button></div>`;
+function showDetail(html) { away = true; $("home").hidden = true; $("onboard").hidden = true; $("switch").hidden = true; const d = $("detail"); d.hidden = false; d.innerHTML = html; window.scrollTo(0, 0); }
+function goHome() { away = false; $("detail").hidden = true; $("detail").innerHTML = ""; renderHome(); applyView(); loadHome(); loadOnboarding(); }
+const backBtn = `<div><button class="btn" type="button" data-back>← Back</button></div>`;
+
+
+// ---------- onboarding ----------
+function obLine(t) {
+  if (t.doneOn) return `Done ${fmt(t.doneOn)}${t.doneBy ? ` by ${esc(t.doneBy)}` : ""}`;
+  if (!t.due) return "No due date";
+  return t.state === "late" ? `<span class="late">Overdue · was due ${fmt(t.due)}</span>` : `Due ${fmt(t.due)}`;
+}
+function renderOnboarding() {
+  const el = $("onboard");
+  if (!ob || !ob.tasks.length) { el.innerHTML = ""; return; }
+  const { mine, hr } = ob;
+  const pct = mine.total ? Math.round(mine.done / mine.total * 100) : 0;
+  const phases = [...new Set(ob.tasks.map(t => t.phase || "Other"))];
+  const trn = data ? data.trainings.filter(t => t.onboarding) : [];
+  el.innerHTML = `
+    <div class="ob-top">
+      <div class="big">${mine.done === mine.total ? "You've finished your onboarding checklist 🎉" : `${mine.done} of ${mine.total} done`}</div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <div class="note">${ob.hireDate ? `Your start date: ${fmt(ob.hireDate)}. ` : ""}${mine.late ? `<b style="color:var(--late)">${mine.late} overdue.</b> ` : ""}Tick each item when it's done.${hr.total ? ` HR has finished ${hr.done} of ${hr.total} things on their side.` : ""}</div>
+    </div>
+    ${trn.length ? `<div class="ob-phase"><h3>Trainings to complete</h3>${trn.map(t => `<div class="ob-trn"><span><span class="tn" style="font-weight:600">${esc(t.name)}</span><br><span class="meta">${esc(line(t))}</span></span><span class="pill k-${t.status}">${LABEL[t.status]}</span><button class="btn${ACTIONABLE.has(t.status) ? " primary" : ""}" type="button" data-open="${esc(t.id)}">${ACTIONABLE.has(t.status) ? "Start" : "Open"}</button></div>`).join("")}</div>` : ""}
+    ${phases.map(ph => `<div class="ob-phase"><h3>${esc(ph)}</h3>${ob.tasks.filter(t => (t.phase || "Other") === ph).map(t => `
+      <label class="ob-task${t.doneOn ? " done" : ""}${!t.doneOn && t.state === "late" ? " late" : ""}">
+        <input type="checkbox" data-ob="${esc(t.id)}" ${t.doneOn ? "checked" : ""} ${obBusy[t.id] ? "disabled" : ""}>
+        <span><span class="tn">${esc(t.name)}</span><br><span class="tm">${obLine(t)}${t.link ? ` · <a href="${esc(t.link)}" target="_blank" rel="noopener">Open link</a>` : ""}</span>${t.notes ? `<br><span class="note">${esc(t.notes)}</span>` : ""}</span>
+      </label>`).join("")}</div>`).join("")}`;
+}
+function applyView() {
+  const hasOb = !!(ob && ob.tasks.length);
+  $("switch").hidden = !hasOb || away;
+  if (hasOb && !view) view = ob.mine.done < ob.mine.total ? "onboarding" : "trainings";
+  const cur = hasOb ? view : "trainings";
+  document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === cur)));
+  if (hasOb) {
+    $("swOb").textContent = `${ob.mine.done}/${ob.mine.total}`;
+    $("swTr").textContent = data ? String(data.trainings.filter(t => ACTIONABLE.has(t.status)).length || "") : "";
+  }
+  if (away) { $("onboard").hidden = true; $("home").hidden = true; return; }
+  $("onboard").hidden = cur !== "onboarding";
+  $("home").hidden = cur !== "trainings";
+  $("eyebrow").textContent = cur === "onboarding" ? "My onboarding" : "My trainings";
+  if (cur === "onboarding") renderOnboarding();
+}
+async function loadOnboarding() {
+  if (!key) return;
+  try {
+    const r = await fetch("/api/onboarding?key=" + encodeURIComponent(key), { cache: "no-store" });
+    const body = await r.json().catch(() => ({}));
+    if (r.ok && body.enabled) ob = body;
+  } catch {}
+  applyView();
+}
+async function tickOb(box) {
+  const t = ob.tasks.find(x => x.id === box.dataset.ob); if (!t) return;
+  const done = box.checked, before = { doneOn: t.doneOn, doneBy: t.doneBy, state: t.state };
+  obBusy[t.id] = true;
+  t.doneOn = done ? new Date().toISOString().slice(0, 10) : null; t.doneBy = null;
+  ob.mine.done += done ? 1 : -1;
+  renderOnboarding(); applyView();
+  try {
+    const r = await fetch("/api/onboarding", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, taskId: t.id, action: done ? "done" : "undo" }) });
+    const res = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(res.message || "That couldn't be saved.");
+  } catch (e) {
+    Object.assign(t, before); ob.mine.done += done ? -1 : 1;
+    setFresh("err", e.message + " Please try again.");
+  }
+  delete obBusy[t.id];
+  await loadOnboarding();
+}
 
 // ---------- lesson rendering (Notion blocks) ----------
 function rt(arr) {
@@ -426,10 +523,13 @@ document.addEventListener("click", (e) => {
   const q = e.target.closest("[data-quiz]"); if (q) return openQuiz(q.dataset.quiz);
   const c = e.target.closest("[data-confirm]"); if (c) return confirmRead(c.dataset.confirm);
   if (e.target.closest("[data-back]")) return goHome();
+  const v = e.target.closest("[data-view]"); if (v) { view = v.dataset.view; return applyView(); }
 });
+document.addEventListener("change", (e) => { if (e.target.matches("[data-ob]")) tickOb(e.target); });
 
 loadHome();
-setInterval(() => { if (!away && document.visibilityState === "visible") loadHome(); }, 120000);
+loadOnboarding();
+setInterval(() => { if (!away && document.visibilityState === "visible") { loadHome(); loadOnboarding(); } }, 120000);
 </script>
 </body>
 </html>

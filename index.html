@@ -68,6 +68,14 @@
   .fresh .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; transform: translateY(-1px); }
   .fresh .dot.warn { background: var(--soon); }
   .fresh .dot.err { background: var(--late); }
+  .who { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .who b { color: var(--fg); font-weight: 600; }
+  .toast { position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 500; font-size: 14px; z-index: 20; max-width: calc(100% - 32px); }
+  .signrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); flex-wrap: wrap; }
+  .signrow .acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .btn.small { padding: 6px 12px; font-size: 13px; }
+  .btn.ok { background: var(--ok); color: #fff; border-color: var(--ok); }
+  .link { font-size: 13px; color: var(--muted); }
   .fresh code { font-family: var(--mono); font-size: 12px; }
 
   /* Tabs */
@@ -194,6 +202,31 @@
   .primary { border: 0; background: var(--accent); color: var(--accent-ink); padding: 9px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; justify-self: start; }
   .skeleton { height: 120px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
   @media (prefers-reduced-motion: no-preference) { .view { animation: fade .18s ease-out; } @keyframes fade { from { opacity: .4 } to { opacity: 1 } } }
+  /* Onboarding */
+  .bar { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; min-width: 80px; }
+  .bar > i { display: block; height: 100%; background: var(--ok); border-radius: inherit; }
+  .hires { display: grid; gap: 10px; }
+  .hire { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 10px; background: var(--surface-2); border: 1px solid transparent; text-align: left; width: 100%; cursor: pointer; }
+  .hire:hover, .hire[aria-current="true"] { border-color: var(--accent); }
+  .hire .l { display: flex; gap: 10px; align-items: center; min-width: 0; }
+  .hire .prog { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
+  .hire .prog b { color: var(--fg); font-variant-numeric: tabular-nums; }
+  @media (max-width: 640px) { .hire { grid-template-columns: minmax(0, 1fr) auto; } .hire .prog { grid-column: 1 / -1; } }
+  .pill { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: var(--surface); color: var(--muted); border: 1px solid var(--line); }
+  .pill.late { background: var(--late-soft); color: var(--late); border-color: transparent; }
+  .pill.done { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+  .phase { display: grid; gap: 6px; }
+  .phase h3 { font-size: 13px; font-weight: 600; margin: 6px 0 0; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .task { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); }
+  .task input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--ok); cursor: pointer; }
+  .task input:disabled { cursor: not-allowed; }
+  .task .tn { overflow-wrap: anywhere; }
+  .task.is-done .tn { color: var(--muted); text-decoration: line-through; }
+  .task .tm { font: 12px/1.4 var(--mono); color: var(--muted); margin-top: 2px; }
+  .task .tm a { color: var(--accent); }
+  .tag { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
+  .tag.hr { background: var(--late-soft); color: var(--late); } .tag.nh { background: var(--retake-soft); color: var(--retake); }
+  .tag.late { background: var(--late); color: #fff; } .tag.soon { background: var(--soon-soft); color: var(--soon); }
 </style>
 
 <div class="wrap">
@@ -203,8 +236,9 @@
     </div>
     <div>
       <h1>Training Compliance Dashboard</h1>
-      <p>Every staff member's training completion, due dates and sign-off status, read from Notion.</p>
+      <p>Every staff member's training, sign-offs and onboarding, read live from Notion.</p>
       <div class="fresh" id="fresh"><span class="dot warn" id="dot"></span><span id="freshText">Loading from Notion…</span></div>
+      <div class="who" id="who" hidden></div>
     </div>
   </header>
 
@@ -213,6 +247,7 @@
     <button class="tab" role="tab" id="tab-employees" data-tab="employees" aria-selected="false">By Employee</button>
     <button class="tab" role="tab" id="tab-trainings" data-tab="trainings" aria-selected="false">By Training</button>
     <button class="tab" role="tab" id="tab-calendar" data-tab="calendar" aria-selected="false">Calendar</button>
+    <button class="tab" role="tab" id="tab-onboarding" data-tab="onboarding" aria-selected="false" hidden>Onboarding</button>
   </nav>
 
   <main id="view" class="view" aria-live="polite">
@@ -237,7 +272,8 @@ const STATUS = {
   na:      { label: "Not applicable",    order: 7 },
 };
 
-const state = { data: null, model: null, tab: "overview", emp: null, trn: null, calMonth: null, calFilter: "all", password: null };
+const state = { data: null, model: null, tab: "overview", emp: null, trn: null, calMonth: null, calFilter: "all", password: null, key: "", confirming: null, signing: null,
+  onb: null, onbSel: null, onbFor: "all", onbOpen: true, onbBusy: {}, onbStarting: null, onbErr: null, onbKeep: new Set() };
 const $ = (id) => document.getElementById(id);
 
 // ---------- helpers ----------
@@ -279,6 +315,7 @@ function compute(data) {
       rec: it.recordUrl ? { url: it.recordUrl } : null,
       done: parseDate(it.done), due: parseDate(it.due), days: it.days,
       score: it.score, attempts: it.attempts, extra: it.extra, version: it.version,
+      recordId: it.recordId, signedBy: it.signedBy,
       passMark: t.passMark ?? 80,
     };
     cells[st.id][t.id] = c;
@@ -303,6 +340,7 @@ function detail(c) {
   if (c.status === "retake") return `Scored ${c.score ?? "–"}% on ${fmt(c.done)} · pass mark ${c.passMark}% · ${plural(c.attempts, "attempt")}`;
   if (c.status === "late") return `Overdue ${-c.days}d · due ${fmt(c.due)}`;
   if (c.status === "soon") return c.days === 0 ? `Due today · ${fmt(c.due)}` : `Due in ${c.days}d · ${fmt(c.due)}`;
+  if (c.signedBy) return `Completed ${fmt(c.done)}${scoreText(c)} · signed off by ${c.signedBy}${c.due ? ` · next due ${fmt(c.due)}` : ""}`;
   if (c.due) return `Completed ${fmt(c.done)}${scoreText(c)} · next due ${fmt(c.due)}`;
   return `Completed ${fmt(c.done)}${scoreText(c)} (one-time)`;
 }
@@ -356,14 +394,47 @@ function viewOverview(m) {
     }).join("")}</div>
   </section>` : ""}
 
-  ${pending.length ? `<section class="panel">
+  ${pending.length ? `<section class="panel" id="signoff">
     <h2>Waiting for manager sign-off</h2>
-    <p class="sub">Employee has completed it. Fill in Manager Signed On in Notion once you've seen them do it.</p>
-    <div class="people">${pending.map(i => {
-      const u = safeUrl(i.rec.url); const tag = u ? "a" : "div";
-      return `<${tag} class="person"${u ? ` href="${esc(u)}" target="_blank" rel="noopener"` : ""}><span class="l">${avatar(i.staff.name)}<span><span class="nm">${esc(i.staff.name)}</span><br><span class="role">${esc(i.training.name)}</span></span></span><span class="d">Completed ${fmt(i.done)}</span></${tag}>`;
-    }).join("")}</div>
+    <p class="sub">${state.data.canSignOff ? "The employee has completed it. Sign off once you've seen them do it." : "Open the dashboard with your Manager Link to sign these off."}</p>
+    <div class="people">${pending.map(signRow).join("")}</div>
   </section>` : ""}`;
+}
+
+function signRow(i) {
+  const u = i.rec ? safeUrl(i.rec.url) : null;
+  const me = state.data.me;
+  const own = me && i.staff.id === me.id;
+  let acts = "";
+  if (state.data.canSignOff && i.recordId) {
+    if (own) acts = `<span class="link">Another manager signs off your own training</span>`;
+    else if (state.signing === i.recordId) acts = `<button class="btn small" type="button" disabled>Signing off…</button>`;
+    else if (state.confirming === i.recordId) acts = `<span class="link">Sign off as ${esc(me.name)}?</span><button class="btn small ok" type="button" data-sign="${esc(i.recordId)}">Confirm</button><button class="btn small" type="button" data-cancel>Cancel</button>`;
+    else acts = `<button class="btn small primary" type="button" data-ask="${esc(i.recordId)}">Sign off</button>`;
+  }
+  return `<div class="signrow">
+    <span class="l" style="display:flex;gap:10px;align-items:center;min-width:0">${avatar(i.staff.name)}<span><span class="nm">${esc(i.staff.name)}</span><br><span class="role">${esc(i.training.name)} · completed ${fmt(i.done)}${i.score != null ? ` · scored ${i.score}%` : ""}</span></span></span>
+    <span class="acts">${u ? `<a class="link" href="${esc(u)}" target="_blank" rel="noopener">View record</a>` : ""}${acts}</span>
+  </div>`;
+}
+
+function toast(msg) {
+  const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 3500);
+}
+
+async function signOff(recordId) {
+  state.signing = recordId; state.confirming = null; render();
+  try {
+    const r = await fetch("/api/dashboard", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: state.key, recordId }) });
+    const res = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(res.message || "The sign-off couldn't be saved.");
+    toast(`Signed off by ${res.signedBy}`);
+  } catch (e) {
+    toast(e.message);
+  }
+  state.signing = null;
+  await load();
 }
 
 function itemCard(c, titleText) {
@@ -487,6 +558,138 @@ function viewCalendar(m) {
   </section>`;
 }
 
+
+// ---------- onboarding ----------
+const TASK_LABEL = { late: "Overdue", soon: "Due soon", open: "", done: "" };
+function viewOnboarding() {
+  const d = state.onb;
+  if (state.onbErr) return `<div class="notice"><h2>Onboarding couldn't load.</h2><p>${esc(state.onbErr)}</p><button class="primary" type="button" data-onb-reload>Try again</button></div>`;
+  if (!d) return `<div class="stats"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>`;
+  const people = d.people;
+  const active = people.filter(p => !p.started || p.all.done < p.all.total);
+  const lateTasks = people.reduce((n, p) => n + p.all.late, 0);
+  const forMe = people.filter(p => p.canManage).reduce((n, p) => n + p.tasks.filter(t => t.for === "HR & Compliance" && !t.doneOn).length, 0);
+  const finished = people.filter(p => p.started && p.all.done === p.all.total).length;
+  if (!state.onbSel || !people.some(p => p.id === state.onbSel)) state.onbSel = (active[0] || people[0] || {}).id || null;
+  const sel = people.find(p => p.id === state.onbSel);
+
+  const list = people.length ? `<div class="hires">${people.map(p => {
+    const pct = p.all.total ? Math.round(p.all.done / p.all.total * 100) : 0;
+    const right = !p.started ? `<span class="pill">Not started</span>`
+      : p.all.done === p.all.total ? `<span class="pill done">Complete</span>`
+      : p.all.late ? `<span class="pill late">${p.all.late} overdue</span>` : `<span class="pill">${pct}%</span>`;
+    return `<button class="hire" type="button" data-onb="${esc(p.id)}" aria-current="${p.id === state.onbSel}">
+      <span class="l">${avatar(p.name)}<span><span class="nm">${esc(p.name)}</span><br><span class="role">${esc(p.role || "No role")}${p.hireDate ? ` · starts ${fmt(parseDate(p.hireDate))}` : " · no hire date"}${p.manager ? ` · with ${esc(p.manager)}` : ""}</span></span></span>
+      <span class="prog">${p.started ? `<span class="bar"><i style="width:${pct}%"></i></span><span>New hire <b>${p.newHire.done}/${p.newHire.total}</b> · HR &amp; Compliance <b>${p.hr.done}/${p.hr.total}</b></span>` : `<span>No tasks yet</span>`}</span>
+      ${right}
+    </button>`;
+  }).join("")}</div>` : `<p class="empty">Nobody is being onboarded. Set someone's Employment Status to “Onboarding” in the Team database and they'll appear here.</p>`;
+
+  return `
+  <section class="stats" aria-label="Onboarding summary">
+    <div class="stat"><span class="k">Being onboarded</span><span class="v">${active.length}</span><span class="s">${finished} finished</span></div>
+    <div class="stat"><span class="k">Overdue tasks</span><span class="v ${lateTasks ? "late" : "ok"}">${lateTasks}</span><span class="s">Past their due date</span></div>
+    <div class="stat"><span class="k">HR tasks for you</span><span class="v soon">${forMe}</span><span class="s">${d.me.isAdmin ? "You're an admin" : "For people you onboard"}</span></div>
+    <div class="stat"><span class="k">Not started</span><span class="v miss">${people.filter(p => !p.started).length}</span><span class="s">Need their tasks created</span></div>
+  </section>
+  <section class="panel">
+    <h2>New hires</h2>
+    <p class="sub">Tasks come from the Onboarding Task Library in Notion. Click someone to see their checklist.</p>
+    ${list}
+  </section>
+  ${sel ? onboardingDetail(sel) : ""}`;
+}
+
+function onboardingDetail(p) {
+  const head = `<div class="profile">${avatar(p.name, true)}<div><h2>${esc(p.name)}</h2><div class="role">${esc(p.role || "No role")}${p.hireDate ? ` · starts ${fmt(parseDate(p.hireDate))}` : ""} · onboarding manager: ${p.manager ? esc(p.manager) : "not set"}</div></div></div>`;
+  if (!p.started) {
+    let action;
+    if (state.onbStarting && state.onbStarting.id === p.id) action = `<button class="btn" type="button" disabled>Creating tasks… ${state.onbStarting.made} so far</button>`;
+    else if (!p.canManage) action = `<p class="empty">Their onboarding manager${p.manager ? ` (${esc(p.manager)})` : ""} or an admin starts this.</p>`;
+    else if (!p.hireDate) action = `<p class="empty">Add a Hire Date on ${esc(p.name)}'s row in Notion first. Due dates are worked out from it.</p>`;
+    else action = `<button class="primary" type="button" data-onb-start="${esc(p.id)}">Start onboarding</button><p class="sub" style="margin:0">Creates ${esc(p.name.split(" ")[0])}'s New hire and HR &amp; Compliance tasks for the ${esc(p.role || "All Staff")} role, with due dates from their start date.</p>`;
+    return `<section class="panel">${head}${action}</section>`;
+  }
+  const f = state.onbFor;
+  let tasks = p.tasks.filter(t => f === "all" || (f === "hr" ? t.for === "HR & Compliance" : t.for !== "HR & Compliance"));
+  const keep = t => !t.doneOn || state.onbKeep.has(t.id);
+  const hiddenDone = state.onbOpen ? tasks.filter(t => !keep(t)).length : 0;
+  if (state.onbOpen) tasks = tasks.filter(keep);
+  const phases = [...new Set(tasks.map(t => t.phase || "Other"))];
+  const fb = (k, label) => `<button data-onb-for="${k}" aria-pressed="${f === k}">${label}</button>`;
+  return `<section class="panel">
+    ${head}
+    <div class="facts"><span><b>${p.all.done}/${p.all.total}</b> done</span><span><b>${p.all.late}</b> overdue</span><span>New hire <b>${p.newHire.done}/${p.newHire.total}</b></span><span>HR &amp; Compliance <b>${p.hr.done}/${p.hr.total}</b></span></div>
+    <div class="calbar">
+      <div class="filters" role="group" aria-label="Whose tasks">${fb("all", "All")}${fb("hr", "HR &amp; Compliance")}${fb("nh", "New hire")}</div>
+      <div class="filters" role="group" aria-label="Show"><button data-onb-open="1" aria-pressed="${state.onbOpen}">Still to do</button><button data-onb-open="0" aria-pressed="${!state.onbOpen}">Everything</button></div>
+    </div>
+    ${!p.canManage ? `<p class="sub" style="margin:0">View only. ${p.manager ? esc(p.manager) : "Their onboarding manager"} or an admin ticks these off.</p>` : ""}
+    ${tasks.length ? phases.map(ph => `<div class="phase"><h3>${esc(ph)}</h3>${tasks.filter(t => (t.phase || "Other") === ph).map(t => taskRow(t, p)).join("")}</div>`).join("")
+      : `<p class="empty">${hiddenDone ? "Everything here is done. 🎉" : "No tasks in this list."}</p>`}
+    ${hiddenDone && tasks.length ? `<p class="link">${hiddenDone} done ${hiddenDone === 1 ? "task" : "tasks"} hidden · <button class="btn small" type="button" data-onb-open="0">Show everything</button></p>` : ""}
+  </section>`;
+}
+
+function taskRow(t, p) {
+  const busy = state.onbBusy[t.id];
+  const meta = [t.owner ? `Owner: ${esc(t.owner)}` : "", t.doneOn ? `Done ${fmt(parseDate(t.doneOn))}${t.doneBy ? ` by ${esc(t.doneBy)}` : ""}` : t.due ? `Due ${fmt(parseDate(t.due))}` : "No due date",
+    t.link ? `<a href="${esc(t.link)}" target="_blank" rel="noopener">Open link</a>` : ""].filter(Boolean).join(" · ");
+  const st = t.doneOn ? "" : t.state === "late" ? `<span class="tag late">Overdue</span>` : t.state === "soon" ? `<span class="tag soon">Due soon</span>` : "";
+  return `<div class="task${t.doneOn ? " is-done" : ""}">
+    <input type="checkbox" data-onb-task="${esc(t.id)}" data-person="${esc(p.id)}" ${t.doneOn ? "checked" : ""} ${!p.canManage || busy ? "disabled" : ""} aria-label="${esc(t.name)}">
+    <div><div class="tn">${esc(t.name)}</div><div class="tm">${meta}${t.notes ? ` · ${esc(t.notes)}` : ""}</div></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${st}<span class="tag ${t.for === "HR & Compliance" ? "hr" : "nh"}">${t.for === "HR & Compliance" ? "HR" : "New hire"}</span></div>
+  </div>`;
+}
+
+async function loadOnboarding() {
+  try {
+    const r = await fetch("/api/onboarding?view=team&key=" + encodeURIComponent(state.key), { cache: "no-store" });
+    const body = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(body.message || "Couldn't load onboarding from Notion.");
+    state.onb = body; state.onbErr = null;
+  } catch (e) { if (!state.onb) state.onbErr = e.message; else toast(e.message); }
+  if (state.tab === "onboarding") render();
+}
+
+async function onbPost(payload) {
+  const r = await fetch("/api/onboarding", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: state.key, ...payload }) });
+  const res = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(res.message || "That couldn't be saved.");
+  return res;
+}
+
+async function startOnboarding(personId) {
+  state.onbStarting = { id: personId, made: 0 }; render();
+  try {
+    for (let i = 0; i < 20; i++) {
+      const res = await onbPost({ action: "start", personId });
+      state.onbStarting.made += res.created; render();
+      if (!res.remaining) break;
+    }
+    toast(`Onboarding started · ${state.onbStarting.made} tasks created`);
+  } catch (e) { toast(e.message); }
+  state.onbStarting = null;
+  await loadOnboarding();
+}
+
+async function toggleTask(box) {
+  const id = box.dataset.onbTask, done = box.checked;
+  const p = state.onb.people.find(x => x.id === box.dataset.person);
+  const t = p && p.tasks.find(x => x.id === id);
+  if (!t) return;
+  state.onbBusy[id] = true;
+  state.onbKeep.add(id);
+  const before = { doneOn: t.doneOn, doneBy: t.doneBy };
+  t.doneOn = done ? iso(today()) : null; t.doneBy = done ? (state.onb.me.name) : null;
+  render();
+  try { await onbPost({ action: done ? "done" : "undo", taskId: id }); }
+  catch (e) { Object.assign(t, before); toast(e.message); }
+  delete state.onbBusy[id];
+  await loadOnboarding();
+}
+
 // ---------- render ----------
 function render() {
   document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === state.tab)));
@@ -495,12 +698,14 @@ function render() {
   const html = state.tab === "employees" ? viewEmployees(state.model)
     : state.tab === "trainings" ? viewTrainings(state.model)
     : state.tab === "calendar" ? viewCalendar(state.model)
+    : state.tab === "onboarding" ? viewOnboarding()
     : viewOverview(state.model);
   v.innerHTML = html;
 }
 
 function setTab(tab) {
   state.tab = tab;
+  if (tab === "onboarding" && !state.onb) loadOnboarding();
   try { history.replaceState(null, "", "#" + tab); } catch {}
   render();
 }
@@ -520,8 +725,23 @@ document.addEventListener("click", (e) => {
   }
   const fl = e.target.closest("[data-filter]");
   if (fl) { state.calFilter = fl.dataset.filter; return render(); }
+  const ask = e.target.closest("[data-ask]");
+  if (ask) { state.confirming = ask.dataset.ask; return render(); }
+  if (e.target.closest("[data-cancel]")) { state.confirming = null; return render(); }
+  const sign = e.target.closest("[data-sign]");
+  if (sign) return signOff(sign.dataset.sign);
+  const onb = e.target.closest("[data-onb]");
+  if (onb) { state.onbSel = onb.dataset.onb; state.onbKeep.clear(); return render(); }
+  const of = e.target.closest("[data-onb-for]");
+  if (of) { state.onbFor = of.dataset.onbFor; state.onbKeep.clear(); return render(); }
+  const oo = e.target.closest("[data-onb-open]");
+  if (oo) { state.onbOpen = oo.dataset.onbOpen === "1"; state.onbKeep.clear(); return render(); }
+  const os = e.target.closest("[data-onb-start]");
+  if (os) return startOnboarding(os.dataset.onbStart);
+  if (e.target.closest("[data-onb-reload]")) { state.onbErr = null; render(); return loadOnboarding(); }
 });
 document.addEventListener("change", (e) => {
+  if (e.target.matches("[data-onb-task]")) return toggleTask(e.target);
   if (e.target.id === "empSelect") { state.emp = e.target.value; render(); }
   if (e.target.id === "trnSelect") { state.trn = e.target.value; render(); }
 });
@@ -540,20 +760,32 @@ function setFresh(kind, text) {
   $("freshText").innerHTML = text;
 }
 
-function showPasswordGate(wrong) {
-  $("view").innerHTML = `<form class="notice" id="pwForm">
-    <h2>Enter the dashboard password</h2>
+function showLogin(body, wrong) {
+  $("who").hidden = true;
+  $("view").innerHTML = `<div class="notice">
+    <h2>Managers only</h2>
+    <p>${esc(body.message || "Open your Manager Link from Notion.")}</p>
+    <p class="sub">Your Manager Link is on your row in the Team database in Notion.</p>
+  </div>${body.passwordAllowed && !state.key ? passwordForm(wrong) : ""}`;
+  setFresh("warn", "Sign-in needed");
+}
+
+function passwordForm(wrong) {
+  return `<form class="notice" id="pwForm">
+    <h2>Or view with the dashboard password</h2>
     <label for="pw">Password</label>
     <input id="pw" type="password" autocomplete="current-password" required>
     ${wrong ? `<span class="err">That password didn't work. Check it and try again.</span>` : ""}
-    <button class="primary" type="submit">Open dashboard</button>
+    <button class="primary" type="submit">Open dashboard (view only)</button>
   </form>`;
-  setFresh("warn", "Password required");
 }
 
 function accept(data) {
   state.data = data;
   state.model = compute(data);
+  $("tab-onboarding").hidden = !data.onboarding;
+  if (!data.onboarding && state.tab === "onboarding") state.tab = "overview";
+  if (state.tab === "onboarding" && !Object.keys(state.onbBusy).length && !state.onbStarting) loadOnboarding();
   render();
 }
 
@@ -565,12 +797,16 @@ async function load() {
     return;
   }
   try {
-    const headers = state.password ? { "x-dashboard-password": state.password } : {};
-    const r = await fetch("/api/dashboard", { headers, cache: "no-store" });
-    if (r.status === 401) return showPasswordGate(!!state.password);
+    const headers = state.password && !state.key ? { "x-dashboard-password": state.password } : {};
+    const r = await fetch("/api/dashboard" + (state.key ? "?key=" + encodeURIComponent(state.key) : ""), { headers, cache: "no-store" });
     const body = await r.json().catch(() => ({}));
+    if (r.status === 401) { state.model = null; return showLogin(body, !!state.password); }
     if (!r.ok) throw new Error(body.message || "Couldn't load data from Notion.");
     accept(body);
+    const who = $("who"); who.hidden = false;
+    who.innerHTML = body.me
+      ? `Signed in as <b>${esc(body.me.name)}</b> · <a href="/me.html?key=${encodeURIComponent(state.key)}">My own trainings</a>`
+      : "View only · open your Manager Link to sign off trainings";
     setFresh("ok", `Live from Notion · updated ${esc(new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }))} · refreshes every minute`);
   } catch (err) {
     if (state.model) setFresh("err", `Couldn't refresh · showing data from earlier. ${esc(err.message)}`);
@@ -584,8 +820,9 @@ async function load() {
 
 (function start() {
   const h = (location.hash || "").slice(1);
-  if (["overview", "employees", "trainings", "calendar"].includes(h)) state.tab = h;
+  if (["overview", "employees", "trainings", "calendar", "onboarding"].includes(h)) state.tab = h;
   try { state.password = sessionStorage.getItem("dash-pw"); } catch {}
+  state.key = new URLSearchParams(location.search).get("key") || "";
   render();
   load();
   if (!SNAPSHOT) setInterval(() => { if (document.visibilityState === "visible") load(); }, REFRESH_MS);

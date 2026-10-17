@@ -7,18 +7,9 @@
 //   POST /api/me {key, trainingId, action:"confirm"}                              -> save "read and understood"
 
 import {
-  PROPS, queryAll, createPage, val, toStaff, toTraining, toRecord,
-  applies, statusFor, todayIn, lessonBlocks, sendNotionError,
+  PROPS, queryAll, createPage, val, toTraining, toRecord,
+  applies, statusFor, todayIn, lessonBlocks, findPerson, sendNotionError,
 } from "./_lib.js";
-
-const KEY_RE = /^[a-z0-9-]{8,64}$/i;
-
-async function findPerson(key) {
-  if (!KEY_RE.test(key || "")) return null;
-  const rows = await queryAll(process.env.TEAM_DB, { property: PROPS.team.linkKey, formula: { string: { equals: key } } });
-  const people = rows.map(toStaff).filter((s) => s.status !== "Former" && s.name !== "Unnamed");
-  return people.length === 1 ? people[0] : null; // a duplicated key opens nothing
-}
 
 async function myTraining(person, trainingId) {
   const rows = await queryAll(process.env.TRAININGS_DB);
@@ -44,7 +35,7 @@ async function loadQuestions(trainingId) {
 function publicTraining(t, s, questionCount) {
   return {
     id: t.id, name: t.name, category: t.category, frequency: t.frequency, passMark: t.passMark, material: t.material,
-    completion: t.completion, needsSignoff: t.needsSignoff, version: t.version,
+    completion: t.completion, needsSignoff: t.needsSignoff, version: t.version, onboarding: !!t.onboarding,
     status: s.status, due: s.due || null, days: s.days ?? null, done: s.done || null,
     attempts: s.attempts || 0, lastScore: s.score ?? null, extra: !!s.extra,
     questionCount,
@@ -159,7 +150,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       generatedAt: new Date().toISOString(),
       today,
-      person: { name: person.name, role: person.role },
+      person: { name: person.name, role: person.role, isManager: person.isManager || person.isAdmin, status: person.status },
       trainings: trainingRows.map(toTraining).filter((t) => applies(person, t))
         .map((t) => publicTraining(t, statusFor(person, t, records, today), qCount[t.id] || 0))
         .sort((a, b) => a.name.localeCompare(b.name)),

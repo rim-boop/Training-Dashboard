@@ -3,28 +3,45 @@
 // Environment variables:
 //   NOTION_TOKEN     Notion integration secret. Needs "Read content" and "Insert content".
 //   TEAM_DB, TRAININGS_DB, COMPLETIONS_DB, QUESTIONS_DB   database IDs
+//   ONBOARD_LIBRARY_DB, ONBOARD_TASKS_DB   optional, turn on the Onboarding part
 //   TIMEZONE         optional, for "today" (default Asia/Dubai)
 
 export const PROPS = {
   team: {
     name: "Name", role: "Role", status: "Employment Status", hireDate: "Hire Date",
-    linkKey: "Link Key", extra: "Extra Trainings",
+    linkKey: "Link Key", extra: "Extra Trainings", excluded: "Not Required", isManager: "Is Manager",
+    isAdmin: "Is Admin", onboardingManager: "Onboarding Manager",
   },
   trainings: {
     name: "Item", roles: "Relevant Role", frequency: "Frequency (months)", category: "Category",
     passMark: "Pass Mark (%)", material: "Material Link",
     completion: "Completion", signoff: "Manager Sign-off", version: "Version",
+    onboarding: "Required at Onboarding",
   },
   completions: {
     title: "Record", employee: "Employee", training: "Training", completed: "Completed On",
     signed: "Manager Signed On", score: "Score (%)", result: "Result", source: "Source",
-    answers: "Answers", version: "Version",
+    answers: "Answers", version: "Version", signedBy: "Signed Off By",
   },
   questions: {
     question: "Question", training: "Training", a: "Option A", b: "Option B", c: "Option C", d: "Option D",
     correct: "Correct Answer", order: "Order",
   },
+  onboardLibrary: {
+    task: "Task", for: "For", phase: "Phase", roles: "Relevant Role", days: "Days From Start",
+    owner: "Owner", category: "Category", link: "Link", notes: "Notes", order: "Order", retired: "Retired",
+  },
+  onboardTasks: {
+    task: "Task", member: "Team Member", library: "Library Task", for: "For", phase: "Phase",
+    owner: "Owner", category: "Category", due: "Due Date", doneOn: "Done On", doneBy: "Done By",
+    link: "Link", notes: "Notes", order: "Order",
+  },
 };
+
+// Phase order for sorting onboarding tasks.
+export const PHASES = ["Pre-offer", "Offer", "Legal once signed", "Before Day 1", "Day 1", "Week 1", "First 30 Days", "First 90 Days", "Ongoing"];
+export const FOR_NEW_HIRE = "New hire";
+export const FOR_HR = "HR & Compliance";
 
 export const DEFAULT_PASS_MARK = 80;
 export const DUE_SOON_DAYS = 60;
@@ -66,6 +83,23 @@ export function createPage(databaseId, properties) {
   return notion("pages", "POST", { parent: { database_id: databaseId }, properties });
 }
 
+export function getPage(pageId) {
+  return notion(`pages/${pageId}`, "GET");
+}
+
+export function updatePage(pageId, properties) {
+  return notion(`pages/${pageId}`, "PATCH", { properties });
+}
+
+// Finds the active person whose personal link key matches. A duplicated or unknown key opens nothing.
+const KEY_RE = /^[a-z0-9-]{8,64}$/i;
+export async function findPerson(key) {
+  if (!KEY_RE.test(key || "")) return null;
+  const rows = await queryAll(process.env.TEAM_DB, { property: PROPS.team.linkKey, formula: { string: { equals: key } } });
+  const people = rows.map(toStaff).filter((s) => s.status !== "Former" && s.name !== "Unnamed");
+  return people.length === 1 ? people[0] : null;
+}
+
 // Read any Notion property as a simple value.
 export function val(page, name) {
   const p = page.properties?.[name];
@@ -104,6 +138,10 @@ export function toStaff(p) {
     status: val(p, T.status),
     hireDate: val(p, T.hireDate),
     extra: val(p, T.extra) || [],
+    excluded: val(p, T.excluded) || [],
+    isManager: val(p, T.isManager) === true,
+    isAdmin: val(p, T.isAdmin) === true,
+    onboardingManager: (val(p, T.onboardingManager) || [])[0] || null,
   };
 }
 export function toTraining(p) {
@@ -120,6 +158,7 @@ export function toTraining(p) {
     completion: val(p, R.completion) === "Quiz" ? "Quiz" : "Read & confirm",
     needsSignoff: val(p, R.signoff) === true,
     version: val(p, R.version),
+    onboarding: val(p, R.onboarding) === true,
   };
 }
 export function toRecord(p) {
@@ -134,6 +173,7 @@ export function toRecord(p) {
     result: val(p, C.result),
     source: val(p, C.source),
     version: val(p, C.version),
+    signedBy: (val(p, C.signedBy) || [])[0] || null,
   };
 }
 
@@ -152,8 +192,10 @@ export function todayIn(tz) {
 export function byRole(staff, training) {
   return training.roles.includes("All Staff") || (!!staff.role && training.roles.includes(staff.role));
 }
+// Who does a training: everyone its role covers, plus Extra Trainings, minus Not Required.
 export function applies(staff, training) {
-  return byRole(staff, training) || staff.extra.includes(training.id);
+  if ((staff.excluded || []).includes(training.id)) return false;
+  return byRole(staff, training) || (staff.extra || []).includes(training.id);
 }
 
 // Passed quiz, confirmed reading, or an older hand-entered record (no result, no score or score at the pass mark).
@@ -240,10 +282,62 @@ export async function lessonBlocks(pageId, depth = 0, budget = { left: 400 }) {
   return out;
 }
 
+// ---------- onboarding ----------
+export function onboardingEnabled() { return !!(process.env.ONBOARD_LIBRARY_DB && process.env.ONBOARD_TASKS_DB); }
+
+export function toLibraryTask(p) {
+  const L = PROPS.onboardLibrary;
+  const link = val(p, L.link);
+  return {
+    id: p.id, name: val(p, L.task) || "Untitled task", for: val(p, L.for) === FOR_HR ? FOR_HR : FOR_NEW_HIRE,
+    phase: val(p, L.phase), roles: val(p, L.roles) || [], days: val(p, L.days),
+    owner: val(p, L.owner), category: val(p, L.category), notes: val(p, L.notes), order: val(p, L.order),
+    link: typeof link === "string" && /^https:\/\//.test(link) ? link : null,
+    retired: val(p, L.retired) === true,
+  };
+}
+export function toOnboardTask(p) {
+  const O = PROPS.onboardTasks;
+  const link = val(p, O.link);
+  return {
+    id: p.id, url: p.url, createdAt: p.created_time,
+    name: val(p, O.task) || "Untitled task",
+    memberId: (val(p, O.member) || [])[0] || null,
+    libraryId: (val(p, O.library) || [])[0] || null,
+    for: val(p, O.for) === FOR_HR ? FOR_HR : FOR_NEW_HIRE,
+    phase: val(p, O.phase), owner: val(p, O.owner), category: val(p, O.category),
+    due: val(p, O.due), doneOn: val(p, O.doneOn), doneBy: (val(p, O.doneBy) || [])[0] || null,
+    notes: val(p, O.notes), order: val(p, O.order),
+    link: typeof link === "string" && /^https:\/\//.test(link) ? link : null,
+  };
+}
+export function libraryApplies(staff, task) {
+  return !task.retired && (task.roles.length === 0 || task.roles.includes("All Staff") || (!!staff.role && task.roles.includes(staff.role)));
+}
+export function addDays(isoDate, n) {
+  const d = parseDate(isoDate); d.setUTCDate(d.getUTCDate() + n); return isoDay(d);
+}
+// open / soon (due in 3 days or less) / late / done
+export function taskState(t, today) {
+  if (t.doneOn) return "done";
+  if (!t.due) return "open";
+  const days = Math.round((parseDate(t.due) - parseDate(today)) / 86400000);
+  return days < 0 ? "late" : days <= 3 ? "soon" : "open";
+}
+export function sortTasks(list) {
+  const rank = (p) => { const i = PHASES.indexOf(p); return i < 0 ? 99 : i; };
+  return list.sort((a, b) => rank(a.phase) - rank(b.phase) || String(a.due || "9999").localeCompare(String(b.due || "9999"))
+    || (a.order ?? 999) - (b.order ?? 999) || a.name.localeCompare(b.name));
+}
+// Who may tick a task for someone: an admin, or the person's appointed onboarding manager.
+export function canManageOnboarding(actor, member) {
+  return !!actor && (actor.isAdmin || (!!member && member.onboardingManager === actor.id && actor.id !== member.id));
+}
+
 export function sendNotionError(res, e) {
   const s = e?.status;
   const message =
-    s === 404 ? "Notion couldn't find one of the databases. Check the database IDs in Vercel and that the integration is connected to the Demo Data page."
+    s === 404 ? "Notion couldn't find one of the databases. Check the database IDs in Vercel and that the integration is connected to the page that holds the databases."
     : s === 401 ? "Notion rejected the integration secret. Check NOTION_TOKEN in Vercel."
     : s === 403 ? "The Notion key isn't allowed to do this. In the integration's settings, turn on Insert content, then redeploy."
     : s === 400 ? "Notion refused the request. A property name in Notion may have changed."

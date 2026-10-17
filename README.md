@@ -63,3 +63,13 @@ Every quiz attempt is saved as a new Completions row, so the full history stays 
 - **Lost or shared link:** type a new Access Key for that person. The old link stops working immediately.
 - **SOP updated:** edit the training page, then change its Version. Everyone who confirmed the old version is asked to confirm again.
 - **Manager sign-off:** fill in Manager Signed On on the passing Completions row.
+
+## Onboarding (optional part)
+
+Turned on when these two Vercel variables are set: `ONBOARD_LIBRARY_DB`, `ONBOARD_TASKS_DB`.
+
+- **Onboarding Task Library**: the master checklist. Columns: Task, For (New hire / HR & Compliance), Phase, Relevant Role, Days From Start, Owner, Category, Link, Notes, Order, Retired.
+- **Onboarding Tasks**: one row per person per task, created by the app. Due Date = Hire Date + Days From Start.
+- **Team**: `Onboarding Manager` (who runs this person's onboarding) and `Is Admin` (can manage anyone's onboarding and open the dashboard).
+
+Flow: set Employment Status = Onboarding + Hire Date + Onboarding Manager → dashboard › Onboarding › Start onboarding → the new hire ticks their tasks on their personal link; the onboarding manager or an admin ticks HR & Compliance tasks on the dashboard. Trainings ticked "Required at Onboarding" also show on the new hire's checklist.
