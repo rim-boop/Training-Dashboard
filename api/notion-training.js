@@ -40,8 +40,12 @@ function visible(v) {
 function publicVideo(v, watchedOn) {
   return { id: v.id, name: v.name, module: v.module, minutes: v.minutes, covers: v.covers, link: v.link, audience: v.audience, watched: !!watchedOn, watchedOn: watchedOn || null };
 }
+// Says which database failed, so a missing connection is easy to fix.
+async function labelled(name, p) {
+  try { return await p; } catch (e) { e.where = name; throw e; }
+}
 async function myWatched(personId) {
-  const rows = await queryAll(process.env.NOTION_TRAINING_DONE_DB, { property: D.member, relation: { contains: personId } });
+  const rows = await labelled("Notion Training Completions", queryAll(process.env.NOTION_TRAINING_DONE_DB, { property: D.member, relation: { contains: personId } }));
   const map = new Map();
   for (const r of rows) for (const vid of val(r, D.video) || []) map.set(vid.replace(/-/g, ""), { rowId: r.id, on: val(r, D.watched) });
   return { rows, map };
@@ -101,7 +105,7 @@ export default async function handler(req, res) {
     }
 
     // ---------- library ----------
-    const [rows, { map }] = await Promise.all([queryAll(process.env.NOTION_TRAINING_DB), myWatched(person.id)]);
+    const [rows, { map }] = await Promise.all([labelled("Training Library", queryAll(process.env.NOTION_TRAINING_DB)), myWatched(person.id)]);
     const videos = rows.map(toVideo).filter(visible)
       .sort((a, b) => a.module.localeCompare(b.module) || a.order - b.order || a.name.localeCompare(b.name));
     const modules = [];
@@ -116,6 +120,13 @@ export default async function handler(req, res) {
       total: videos.length, watched: modules.reduce((n, m) => n + m.watched, 0), modules,
     });
   } catch (e) {
+    if (e.where && (e.status === 404 || e.status === 400 || e.status === 403)) {
+      const why = e.status === 404
+        ? `Notion couldn't find the ${e.where} database. In Notion, open it (or the page that holds it), click ••• → Connections and add the app's integration. Also check the database ID in Vercel.`
+        : e.status === 403 ? `The app's integration isn't allowed to read the ${e.where} database. Check its capabilities in the integration settings.`
+        : `Notion refused the request to the ${e.where} database. A column name may have changed.`;
+      return res.status(502).json({ error: "notion_error", message: why, detail: String(e.detail || "").slice(0, 300) });
+    }
     return sendNotionError(res, e);
   }
 }
