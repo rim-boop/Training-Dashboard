@@ -73,3 +73,9 @@ Turned on when these two Vercel variables are set: `ONBOARD_LIBRARY_DB`, `ONBOAR
 - **Team**: `Onboarding Manager` (who runs this person's onboarding) and `Is Admin` (can manage anyone's onboarding and open the dashboard).
 
 Flow: set Employment Status = Onboarding + Hire Date + Onboarding Manager → dashboard › Onboarding › Start onboarding → the new hire ticks their tasks on their personal link; the onboarding manager or an admin ticks HR & Compliance tasks on the dashboard. Trainings ticked "Required at Onboarding" also show on the new hire's checklist.
+
+## Notion training (optional part, managers and admins)
+
+`/notion.html?key=<Link Key>` — the Notion Setup Training Library as a portal: Loom videos, written steps, and "Mark as watched".
+Turned on with `NOTION_TRAINING_DB` (Training Library) and `NOTION_TRAINING_DONE_DB` (Notion Training Completions).
+Shows videos with Status "Published", plus "Recorded" / "In progress" ones that have a video link. Phase 2 and unrecorded videos stay hidden.

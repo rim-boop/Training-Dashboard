@@ -222,7 +222,7 @@ function line(t) {
 function renderHome() {
   if (!data) return;
   $("hello").textContent = `Hi ${data.person.name.split(" ")[0]}`;
-  $("role").innerHTML = esc(data.person.role || "") + (data.person.isManager ? `${data.person.role ? " · " : ""}<a href="/?key=${encodeURIComponent(key)}">Open the manager dashboard</a>` : "");
+  $("role").innerHTML = esc(data.person.role || "") + (data.person.isManager ? `${data.person.role ? " · " : ""}<a href="/?key=${encodeURIComponent(key)}">Open the manager dashboard</a> · <a href="/notion.html?key=${encodeURIComponent(key)}">Notion training</a>` : "");
   const list = [...data.trainings].sort((a, b) => RANK[a.status] - RANK[b.status] || (a.due || "9").localeCompare(b.due || "9") || a.name.localeCompare(b.name));
   $("nTodo").textContent = list.filter(t => ACTIONABLE.has(t.status)).length;
   $("nWait").textContent = list.filter(t => t.status === "signoff").length;

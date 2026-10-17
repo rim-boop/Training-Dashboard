@@ -866,7 +866,7 @@ async function load() {
     accept(body);
     const who = $("who"); who.hidden = false;
     who.innerHTML = body.me
-      ? `Signed in as <b>${esc(body.me.name)}</b> · <a href="/me.html?key=${encodeURIComponent(state.key)}">My own trainings</a>`
+      ? `Signed in as <b>${esc(body.me.name)}</b> · <a href="/me.html?key=${encodeURIComponent(state.key)}">My own trainings</a> · <a href="/notion.html?key=${encodeURIComponent(state.key)}">Notion training</a>`
       : "View only · open your Manager Link to sign off trainings";
     setFresh("ok", `Live from Notion · updated ${esc(new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }))} · refreshes every minute`);
   } catch (err) {

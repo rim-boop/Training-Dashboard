@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Notion Training</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: one column — Notion admin training by module; opening a video shows the Loom, then its written steps */
+  :root {
+    --bg: #f4f5f2; --surface: #ffffff; --surface-2: #eef0ec; --fg: #1b231f; --muted: #5d6963; --line: #dde2dd;
+    --accent: #2c6a52; --accent-ink: #ffffff;
+    --ok: #3d8a63; --ok-soft: #e1f0e7; --soon: #b07a23; --soon-soft: #f7ecd6;
+    --late: #b5443d; --late-soft: #f8e3e1; --miss: #74559f; --miss-soft: #ece5f5;
+    --retake: #2f6fae; --retake-soft: #e2ecf8; --update: #b0447a; --update-soft: #f8e2ee;
+    --n-blue: #2f6fae; --n-blue-bg: #e7f0f9; --n-yellow-bg: #fbf3db; --n-red-bg: #fbe8e6; --n-green-bg: #e6f2ea; --n-purple-bg: #f0eaf8; --n-pink-bg: #f9e8f1; --n-orange-bg: #fbeee0; --n-brown-bg: #f2ebe4;
+    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --body: "Figtree", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111614; --surface: #19201d; --surface-2: #222a26; --fg: #e5ebe7; --muted: #9aa7a0; --line: #2c3631;
+      --accent: #6cbf98; --accent-ink: #0f1a15;
+      --ok: #6cc595; --ok-soft: #1c3227; --soon: #e0b062; --soon-soft: #362b17;
+      --late: #ec8a82; --late-soft: #3a1f1d; --miss: #b49ae0; --miss-soft: #2b2338;
+      --retake: #8ab8ec; --retake-soft: #1b2a3d; --update: #ee9cc6; --update-soft: #3a1f2e;
+      --n-blue: #8ab8ec; --n-blue-bg: #1b2a3d; --n-yellow-bg: #362f17; --n-red-bg: #3a1f1d; --n-green-bg: #1c3227; --n-purple-bg: #2b2338; --n-pink-bg: #3a1f2e; --n-orange-bg: #3a2a19; --n-brown-bg: #2f2822;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: max(24px, env(safe-area-inset-top, 0px)) 56px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 18px; }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  a { color: var(--accent); }
+
+  .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  h1 { font: 600 clamp(26px, 6vw, 34px)/1.1 var(--display); margin: 2px 0 0; text-wrap: balance; }
+  .role { color: var(--muted); font-size: 14px; }
+  .fresh { color: var(--muted); font-size: 13px; display: flex; gap: 8px; align-items: baseline; margin-top: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; transform: translateY(-1px); }
+  .dot.warn { background: var(--soon); } .dot.err { background: var(--late); }
+
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 2px; }
+  .stat b { font: 600 30px/1 var(--display); font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--muted); font-size: 13px; }
+  .stat.todo b { color: var(--soon); } .stat.wait b { color: var(--retake); } .stat.ok b { color: var(--ok); }
+  @media (max-width: 420px) { .stat b { font-size: 24px; } .stat { padding: 12px; } }
+
+  .list { display: grid; gap: 10px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; }
+  .card.k-retake { border-color: var(--retake); } .card.k-late { border-color: var(--late); } .card.k-update { border-color: var(--update); }
+  .row1 { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .name { font: 600 17px/1.3 var(--display); overflow-wrap: anywhere; }
+  .meta { font: 13px/1.5 var(--mono); color: var(--muted); }
+  .pill { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+  .k-ok.pill { color: var(--ok); background: var(--ok-soft); } .k-soon.pill { color: var(--soon); background: var(--soon-soft); }
+  .k-late.pill { color: var(--late); background: var(--late-soft); } .k-missing.pill { color: var(--miss); background: var(--miss-soft); }
+  .k-retake.pill { color: var(--retake); background: var(--retake-soft); } .k-update.pill { color: var(--update); background: var(--update-soft); }
+  .k-signoff.pill { color: var(--ok); background: transparent; box-shadow: inset 0 0 0 1.5px var(--ok); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 9px 14px; font-weight: 600; cursor: pointer; text-decoration: none; color: var(--fg); font-size: 15px; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn[disabled] { opacity: .55; cursor: not-allowed; }
+  .note { color: var(--muted); font-size: 14px; }
+
+  /* lesson */
+  .lesson-head { display: grid; gap: 8px; }
+  .lesson-head h2 { font: 600 clamp(24px, 5vw, 30px)/1.15 var(--display); margin: 0; text-wrap: balance; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+  .progress { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 8px; }
+  .progress .top { display: flex; justify-content: space-between; font-weight: 600; font-size: 14px; }
+  .bar { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s; }
+  .doc { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 10px; min-width: 0; }
+  .doc > *, .doc .callout > *, .doc .col > * { margin: 0; min-width: 0; }
+  .doc h2, .doc h3, .doc h4 { font-family: var(--display); font-weight: 600; line-height: 1.25; text-wrap: balance; }
+  .doc h2 { font-size: 22px; } .doc h3 { font-size: 18px; } .doc h4 { font-size: 16px; }
+  .doc p { overflow-wrap: anywhere; }
+  .doc ul, .doc ol { padding-left: 1.3em; display: grid; gap: 4px; }
+  .doc hr { border: 0; border-top: 1px solid var(--line); width: 100%; }
+  .doc code { font: 14px var(--mono); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+  .doc img { max-width: 100%; border-radius: 8px; }
+  .doc blockquote { border-left: 3px solid var(--line); padding-left: 12px; color: var(--muted); }
+  .callout { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; padding: 14px 16px; border-radius: 10px; background: var(--surface-2); }
+  .callout.noicon { grid-template-columns: minmax(0, 1fr); }
+  .callout .ic { font-size: 18px; line-height: 1.5; }
+  .callout .body { display: grid; gap: 8px; min-width: 0; }
+  .callout .body > * { margin: 0; }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .col { display: grid; gap: 8px; align-content: start; min-width: 0; }
+  .todo { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; background: var(--surface); cursor: pointer; }
+  .callout .todo { background: var(--bg); }
+  .todo input { margin-top: 5px; accent-color: var(--accent); flex: none; width: 17px; height: 17px; }
+  .todo:has(input:checked) span { color: var(--muted); }
+  details summary { cursor: pointer; font-weight: 600; }
+  .linkout { display: inline-flex; gap: 6px; align-items: center; }
+  .bg-gray_bg, .bg-default { background: var(--surface-2); } .bg-blue_bg { background: var(--n-blue-bg); } .bg-yellow_bg { background: var(--n-yellow-bg); }
+  .bg-red_bg { background: var(--n-red-bg); } .bg-green_bg { background: var(--n-green-bg); } .bg-purple_bg { background: var(--n-purple-bg); }
+  .bg-pink_bg { background: var(--n-pink-bg); } .bg-orange_bg { background: var(--n-orange-bg); } .bg-brown_bg { background: var(--n-brown-bg); }
+  .c-green { color: var(--ok); } .c-blue { color: var(--n-blue); } .c-red { color: var(--late); } .c-orange, .c-yellow { color: var(--soon); }
+  .c-purple { color: var(--miss); } .c-pink { color: var(--update); } .c-gray, .c-brown { color: var(--muted); }
+
+  .finish { background: var(--surface); border: 2px solid var(--accent); border-radius: 12px; padding: 18px; display: grid; gap: 12px; }
+  .finish h3 { font: 600 19px/1.25 var(--display); margin: 0; }
+  .confirm-box { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 8px; background: var(--surface-2); cursor: pointer; font-weight: 500; }
+  .confirm-box input { margin-top: 5px; accent-color: var(--accent); width: 18px; height: 18px; flex: none; }
+
+  /* quiz */
+  .quiz { display: grid; gap: 16px; }
+  .quiz h2 { font: 600 24px/1.2 var(--display); margin: 0; text-wrap: balance; }
+  fieldset { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 16px; margin: 0; display: grid; gap: 8px; min-width: 0; }
+  fieldset.missing { border-color: var(--late); }
+  legend { float: left; width: 100%; padding: 0; margin: 0 0 6px; font-weight: 600; }
+  legend + * { clear: both; }
+  .qnum { font: 500 12px var(--mono); color: var(--muted); display: block; }
+  label.opt { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); cursor: pointer; }
+  label.opt:has(input:checked) { outline: 2px solid var(--accent); outline-offset: -2px; }
+  label.opt input { margin-top: 4px; accent-color: var(--accent); flex: none; }
+  .letter { font: 500 13px var(--mono); color: var(--muted); }
+  .err { color: var(--late); font-size: 14px; }
+
+  .result { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px; display: grid; gap: 12px; }
+  .result .big { font: 600 56px/1 var(--display); font-variant-numeric: tabular-nums; }
+  .result.pass .big { color: var(--ok); } .result.fail .big { color: var(--retake); }
+  .result h2 { font: 600 22px/1.2 var(--display); margin: 0; }
+  .marks { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mark { font: 500 13px var(--mono); padding: 4px 10px; border-radius: 6px; }
+  .mark.r { background: var(--ok-soft); color: var(--ok); } .mark.w { background: var(--retake-soft); color: var(--retake); }
+  .empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; padding: 20px; color: var(--muted); }
+  .skeleton { height: 96px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+  /* onboarding */
+  .switch { display: inline-flex; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; justify-self: start; }
+  .switch button { border: 0; background: transparent; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--muted); font-size: 15px; }
+  .switch button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .switch .n { font: 500 12px var(--mono); margin-left: 4px; opacity: .8; }
+  .ob-top { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; }
+  .ob-top .big { font: 600 22px/1.2 var(--display); }
+  .ob-top .bar i { background: var(--ok); }
+  .ob-phase { display: grid; gap: 8px; margin-top: 14px; }
+  .ob-phase h3 { font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0; font-weight: 600; }
+  .ob-task { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); cursor: pointer; }
+  .ob-task.late { border-color: var(--late); }
+  .ob-task input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--ok); flex: none; cursor: pointer; }
+  .ob-task .tn { font-weight: 500; overflow-wrap: anywhere; }
+  .ob-task.done .tn { color: var(--muted); text-decoration: line-through; }
+  .ob-task .tm { font: 12.5px/1.5 var(--mono); color: var(--muted); }
+  .ob-task .tm .late { color: var(--late); font-weight: 500; }
+  .ob-task { cursor: default; align-items: center; }
+  .ob-open { flex: 1; min-width: 0; border: 0; background: none; padding: 0; text-align: left; cursor: pointer; display: grid; gap: 2px; font: inherit; color: inherit; }
+  .ob-open:hover .tn { color: var(--accent); }
+  .ob-task .chev { color: var(--muted); font-size: 22px; line-height: 1; flex: none; }
+  .ob-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ob-trn { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 14px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); flex-wrap: wrap; }
+
+  /* notion training */
+  .mod { display: grid; gap: 10px; margin-top: 18px; }
+  .mod-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .mod-head h2 { font: 600 19px/1.25 var(--display); margin: 0; }
+  .mod-head .meta { white-space: nowrap; }
+  .mod .bar i { background: var(--ok); }
+  .vcard { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: start; text-align: left; width: 100%; cursor: pointer; font: inherit; color: inherit; }
+  .vcard:hover { border-color: var(--accent); }
+  .vcard .covers { grid-column: 1 / -1; color: var(--muted); font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .pill.k-watched { color: var(--ok); background: var(--ok-soft); } .pill.k-new { color: var(--muted); background: var(--surface-2); }
+  .overall { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; }
+  .overall .big { font: 600 22px/1.2 var(--display); }
+  .overall .bar i { background: var(--ok); }
+  .video { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--line); }
+  .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">For managers &amp; admins</div>
+    <h1 id="hello">Loading the training…</h1>
+    <div class="role" id="role"></div>
+    <div class="fresh"><span class="dot warn" id="dot"></span><span id="freshText">Connecting…</span></div>
+  </header>
+  <section id="home"><div class="skeleton"></div><div class="skeleton" style="margin-top:10px"></div></section>
+  <section id="detail" hidden aria-live="polite"></section>
+</div>
+
+<script>
+const key = new URLSearchParams(location.search).get("key") || "";
+const $ = (id) => document.getElementById(id);
+let data = null, away = false;
+
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+function fmt(iso) { if (!iso) return ""; const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); }
+function setFresh(kind, text) { $("dot").className = "dot" + (kind === "ok" ? "" : kind === "warn" ? " warn" : " err"); $("freshText").textContent = text; }
+function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch { return null; } }
+function mins(m) { if (m == null) return ""; return `${String(m).replace(".5", "½")} min`; }
+function loomEmbed(u) {
+  try { const x = new URL(u); if (x.protocol !== "https:" || !/(^|\.)loom\.com$/.test(x.hostname)) return null;
+    const m = x.pathname.match(/\/(?:share|embed)\/([a-zA-Z0-9]+)/); return m ? `https://www.loom.com/embed/${m[1]}` : null; } catch { return null; }
+}
+const backBtn = `<div><button class="btn" type="button" data-back>← Back</button></div>`;
+
+// ---------- home ----------
+function renderHome() {
+  if (!data) return;
+  $("hello").textContent = "Notion training";
+  $("role").innerHTML = `For ${esc(data.person.name)} · <a href="/?key=${encodeURIComponent(key)}">Manager dashboard</a> · <a href="/me.html?key=${encodeURIComponent(key)}">My trainings</a>`;
+  const pct = data.total ? Math.round(data.watched / data.total * 100) : 0;
+  const totalMin = data.modules.reduce((n, m) => n + m.minutes, 0);
+  $("home").innerHTML = data.total ? `
+    <div class="overall">
+      <div class="big">${data.watched === data.total ? "You've watched everything 🎉" : `${data.watched} of ${data.total} videos watched`}</div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <div class="note">About ${Math.round(totalMin)} minutes in total. Start at the top and work down. Each video has written steps underneath, so you never need to re-watch to check one detail.</div>
+    </div>
+    ${data.modules.map(m => `<section class="mod">
+      <div class="mod-head"><h2>${esc(m.name)}</h2><span class="meta">${m.watched}/${m.total} watched · ${Math.round(m.minutes)} min</span></div>
+      <div class="bar"><i style="width:${m.total ? Math.round(m.watched / m.total * 100) : 0}%"></i></div>
+      ${m.videos.map(v => `<button class="vcard" type="button" data-video="${esc(v.id)}">
+        <span><span class="name">${esc(v.name)}</span><br><span class="meta">${esc(mins(v.minutes))}${v.audience === "All staff" ? " · for all staff" : ""}${v.watched ? ` · watched ${fmt(v.watchedOn)}` : ""}</span></span>
+        <span class="pill ${v.watched ? "k-watched" : "k-new"}">${v.watched ? "Watched ✓" : "Not watched"}</span>
+        ${v.covers ? `<span class="covers">${esc(v.covers)}</span>` : ""}
+      </button>`).join("")}
+    </section>`).join("")}` : `<div class="empty">No videos are published yet.</div>`;
+}
+
+async function loadHome() {
+  if (!key) { $("hello").textContent = "Open your Manager Link"; $("home").innerHTML = `<div class="empty">This page needs your Manager Link from Notion.</div>`; setFresh("err", "No link"); return; }
+  try {
+    const r = await fetch("/api/notion-training?key=" + encodeURIComponent(key), { cache: "no-store" });
+    const body = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(body.message || "Couldn't load the training.");
+    if (!body.enabled) throw new Error("The Notion training isn't switched on yet.");
+    data = body;
+    if (!away) renderHome();
+    setFresh("ok", "Up to date · " + new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }));
+  } catch (e) {
+    if (data) setFresh("err", "Couldn't refresh · " + e.message);
+    else { $("hello").textContent = "We couldn't open the training"; $("home").innerHTML = `<div class="empty">${esc(e.message)}</div>`; setFresh("err", "Not loaded"); }
+  }
+}
+
+function showDetail(html) { away = true; $("home").hidden = true; const d = $("detail"); d.hidden = false; d.innerHTML = html; window.scrollTo(0, 0); }
+function goHome() { away = false; $("detail").hidden = true; $("detail").innerHTML = ""; $("home").hidden = false; renderHome(); loadHome(); }
+
+// ---------- lesson rendering (Notion blocks) ----------
+function rt(arr) {
+  return (arr || []).map(t => {
+    let h = esc(t.text).replace(/\n/g, "<br>");
+    if (t.code) h = `<code>${h}</code>`;
+    if (t.b) h = `<strong>${h}</strong>`;
+    if (t.i) h = `<em>${h}</em>`;
+    if (t.s) h = `<s>${h}</s>`;
+    if (t.u) h = `<u>${h}</u>`;
+    if (t.color && !t.color.endsWith("_background")) h = `<span class="c-${esc(t.color)}">${h}</span>`;
+    if (t.href) h = `<a href="${esc(t.href)}" target="_blank" rel="noopener">${h}</a>`;
+    return h;
+  }).join("");
+}
+let todoCount = 0;
+function blocks(list) {
+  let out = "", i = 0;
+  while (i < list.length) {
+    const b = list[i];
+    if (b.type === "bulleted_list_item" || b.type === "numbered_list_item") {
+      const tag = b.type === "bulleted_list_item" ? "ul" : "ol";
+      out += `<${tag}>`;
+      while (i < list.length && list[i].type === b.type) { out += `<li>${rt(list[i].text)}${list[i].children ? blocks(list[i].children) : ""}</li>`; i++; }
+      out += `</${tag}>`;
+      continue;
+    }
+    out += block(b); i++;
+  }
+  return out;
+}
+function block(b) {
+  const kids = b.children ? blocks(b.children) : "";
+  switch (b.type) {
+    case "paragraph": return b.text && b.text.length ? `<p>${rt(b.text)}</p>${kids}` : "";
+    case "heading_1": return `<h2>${rt(b.text)}</h2>`;
+    case "heading_2": return `<h3>${rt(b.text)}</h3>`;
+    case "heading_3": return `<h4>${rt(b.text)}</h4>`;
+    case "divider": return "<hr>";
+    case "quote": return `<blockquote>${rt(b.text)}${kids}</blockquote>`;
+    case "to_do": { const n = todoCount++; return `<label class="todo"><input type="checkbox" data-todo="${n}"><span>${rt(b.text)}</span></label>${kids}`; }
+    case "toggle": return `<details><summary>${rt(b.text)}</summary>${kids}</details>`;
+    case "callout": {
+      const bg = /_background$/.test(b.color || "") ? b.color.replace("_background", "_bg") : (b.color || "default");
+      const icon = b.icon ? `<span class="ic" aria-hidden="true">${esc(b.icon)}</span>` : "";
+      return `<div class="callout bg-${esc(bg)}${icon ? "" : " noicon"}">${icon}<div class="body">${b.text && b.text.length ? `<p>${rt(b.text)}</p>` : ""}${kids}</div></div>`;
+    }
+    case "column_list": return `<div class="cols">${(b.children || []).map(c => `<div class="col">${c.children ? blocks(c.children) : ""}</div>`).join("")}</div>`;
+    case "image": return b.src && /^https:\/\//.test(b.src) ? `<figure style="margin:0"><img src="${esc(b.src)}" alt="${esc((b.caption || []).map(c => c.text).join(""))}">${b.caption && b.caption.length ? `<figcaption class="note">${rt(b.caption)}</figcaption>` : ""}</figure>` : "";
+    case "bookmark": case "embed": case "video": case "pdf": case "file": case "link_preview":
+      return b.href && /^https:\/\//.test(b.href) ? `<p><a class="linkout" href="${esc(b.href)}" target="_blank" rel="noopener">${b.caption && b.caption.length ? rt(b.caption) : (b.type === "video" ? "Watch the video" : b.type === "pdf" || b.type === "file" ? "Open the document" : esc(b.href))} ↗</a></p>` : "";
+    default: return kids;
+  }
+}
+
+function wireTodos(trainingId) {
+  const boxes = [...document.querySelectorAll("[data-todo]")];
+  if (!boxes.length) return;
+  const k = `todo:${key}:${trainingId}`;
+  const saved = store(k) || {};
+  boxes.forEach(b => { b.checked = !!saved[b.dataset.todo]; });
+  const update = () => {
+    const done = boxes.filter(b => b.checked).length, pct = Math.round(done / boxes.length * 100);
+    if ($("pct")) { $("pct").textContent = pct + "%"; $("barFill").style.width = pct + "%"; }
+  };
+  boxes.forEach(b => b.addEventListener("change", () => { const s = store(k) || {}; s[b.dataset.todo] = b.checked; store(k, s); update(); }));
+  update();
+}
+
+
+// ---------- one video ----------
+async function openVideo(id) {
+  showDetail(`${backBtn}<div class="skeleton"></div>`);
+  try {
+    const r = await fetch(`/api/notion-training?key=${encodeURIComponent(key)}&video=${encodeURIComponent(id)}`, { cache: "no-store" });
+    const res = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(res.message || "Couldn't open this video.");
+    const v = res.video;
+    todoCount = 0;
+    const body = blocks(res.blocks || []);
+    const embed = v.link ? loomEmbed(v.link) : null;
+    const chips = [v.module, mins(v.minutes), v.audience === "All staff" ? "For all staff" : null].filter(Boolean);
+    showDetail(`${backBtn}
+      <div class="lesson-head">
+        <div class="eyebrow">Notion training</div>
+        <h2>${esc(v.name)}</h2>
+        <div class="chips">${chips.map(c => `<span class="chip">${esc(c)}</span>`).join("")}${v.watched ? `<span class="pill k-watched">Watched ✓</span>` : ""}</div>
+      </div>
+      ${embed ? `<div class="video"><iframe src="${esc(embed)}" title="${esc(v.name)}" allow="fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`
+        : v.link ? `<p><a class="btn primary" href="${esc(v.link)}" target="_blank" rel="noopener">Open the guide ↗</a></p>` : ""}
+      ${todoCount ? `<div class="progress"><div class="top"><span>Your progress through this page</span><span id="pct">0%</span></div><div class="bar"><i id="barFill"></i></div><div class="note">Ticks are saved on this device only.</div></div>` : ""}
+      <article class="doc">${body || `<p class="note">${esc(v.covers || "No written steps for this video yet.")}</p>`}</article>
+      <div class="finish">
+        ${v.watched ? `<h3>Watched ✓</h3><div class="note">You marked this as watched on ${fmt(v.watchedOn)}.</div>
+          <div class="actions"><button class="btn" type="button" data-mark="${esc(v.id)}" data-act="unwatch">Undo</button></div>`
+        : `<h3>Done with this one?</h3><div class="err" id="markErr" role="alert"></div>
+          <div class="actions"><button class="btn primary" type="button" data-mark="${esc(v.id)}" data-act="watched">Mark as watched</button></div>`}
+      </div>`);
+    wireTodos("notion-" + v.id);
+  } catch (e) {
+    showDetail(`${backBtn}<div class="empty">${esc(e.message)}</div>`);
+  }
+}
+
+async function mark(btn) {
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    const r = await fetch("/api/notion-training", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, videoId: btn.dataset.mark, action: btn.dataset.act }) });
+    const res = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(res.message || "That couldn't be saved.");
+    if (btn.dataset.act === "watched") goHome(); else openVideo(btn.dataset.mark);
+  } catch (e) {
+    const el = $("markErr"); if (el) el.textContent = e.message + " Please try again."; else setFresh("err", e.message);
+    btn.disabled = false; btn.textContent = btn.dataset.act === "watched" ? "Mark as watched" : "Undo";
+  }
+}
+
+document.addEventListener("click", (e) => {
+  const v = e.target.closest("[data-video]"); if (v) return openVideo(v.dataset.video);
+  const m = e.target.closest("[data-mark]"); if (m) return mark(m);
+  if (e.target.closest("[data-back]")) return goHome();
+});
+
+loadHome();
+setInterval(() => { if (!away && document.visibilityState === "visible") loadHome(); }, 120000);
+</script>
+</body>
+</html>
