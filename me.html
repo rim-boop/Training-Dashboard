@@ -262,14 +262,12 @@ function renderOnboarding() {
   const { mine, hr } = ob;
   const pct = mine.total ? Math.round(mine.done / mine.total * 100) : 0;
   const phases = [...new Set(ob.tasks.map(t => t.phase || "Other"))];
-  const trn = data ? data.trainings.filter(t => t.onboarding) : [];
   el.innerHTML = `
     <div class="ob-top">
       <div class="big">${mine.done === mine.total ? "You've finished your onboarding checklist 🎉" : `${mine.done} of ${mine.total} done`}</div>
       <div class="bar"><i style="width:${pct}%"></i></div>
       <div class="note">${ob.hireDate ? `Your start date: ${fmt(ob.hireDate)}. ` : ""}${mine.late ? `<b style="color:var(--late)">${mine.late} overdue.</b> ` : ""}Tick each item when it's done.${hr.total ? ` HR has finished ${hr.done} of ${hr.total} things on their side.` : ""}</div>
     </div>
-    ${trn.length ? `<div class="ob-phase"><h3>Trainings to complete</h3>${trn.map(t => `<div class="ob-trn"><span><span class="tn" style="font-weight:600">${esc(t.name)}</span><br><span class="meta">${esc(line(t))}</span></span><span class="pill k-${t.status}">${LABEL[t.status]}</span><button class="btn${ACTIONABLE.has(t.status) ? " primary" : ""}" type="button" data-open="${esc(t.id)}">${ACTIONABLE.has(t.status) ? "Start" : "Open"}</button></div>`).join("")}</div>` : ""}
     ${phases.map(ph => `<div class="ob-phase"><h3>${esc(ph)}</h3>${ob.tasks.filter(t => (t.phase || "Other") === ph).map(t => `
       <label class="ob-task${t.doneOn ? " done" : ""}${!t.doneOn && t.state === "late" ? " late" : ""}">
         <input type="checkbox" data-ob="${esc(t.id)}" ${t.doneOn ? "checked" : ""} ${obBusy[t.id] ? "disabled" : ""}>
