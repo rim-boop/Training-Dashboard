@@ -7,7 +7,7 @@
 // Environment: NOTION_TRAINING_DB (the Training Library database), NOTION_TRAINING_DONE_DB (Notion Training Completions).
 // Which videos show: Status "Published", or "Recorded" / "In progress" when a video link is filled in.
 
-import { queryAll, createPage, getPage, val, findPerson, todayIn, lessonBlocks, sendNotionError } from "./_lib.js";
+import { queryAll, createPage, getPage, val, findPerson, todayIn, lessonBlocks, sendNotionError, notionApiBase } from "./_lib.js";
 
 const L = { title: "Video", module: "Module", order: "Order", minutes: "Minutes", link: "Loom", status: "Status", audience: "Audience", covers: "What it covers" };
 const D = { title: "Record", member: "Team Member", video: "Video", watched: "Watched On" };
@@ -16,7 +16,7 @@ const sameId = (a, b) => String(a || "").replace(/-/g, "") === String(b || "").r
 const enabled = () => !!(process.env.NOTION_TRAINING_DB && process.env.NOTION_TRAINING_DONE_DB);
 
 async function notionPatch(pageId, body) {
-  const r = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
+  const r = await fetch(`${notionApiBase()}/pages/${pageId}`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${process.env.NOTION_TOKEN}`, "Notion-Version": "2022-06-28", "Content-Type": "application/json" },
     body: JSON.stringify(body),

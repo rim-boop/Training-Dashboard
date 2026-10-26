@@ -1,5 +1,8 @@
 {
   "name": "my-trainings",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "build:pages": "node scripts/build-pages.mjs"
+  }
 }

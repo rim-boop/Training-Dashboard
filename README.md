@@ -55,6 +55,26 @@ Every quiz attempt is saved as a new Completions row, so the full history stays 
 | `DASHBOARD_PASSWORD` | Optional but recommended: protects the manager dashboard |
 | `TIMEZONE` | Optional, default `Asia/Dubai` |
 
+## Hosting on Cloudflare Pages (free, commercial use allowed)
+
+The same code runs on Vercel and on Cloudflare. On Cloudflare, `functions/_adapter.js` runs the `api/*.js` handlers unchanged.
+
+Per client (the client owns the Cloudflare account, you are invited as a member):
+
+1. Client: sign up at cloudflare.com (Free plan), then **Manage Account → Members** → invite you as Administrator.
+2. Client: create a Notion integration and connect it to the training databases.
+3. You: in the client's account, **Workers & Pages → Create → Pages → Connect to Git** → this repo.
+   - Framework preset: **None**
+   - Build command: `npm run build:pages`
+   - Build output directory: `dist`
+4. **Settings → Variables and secrets** (Production): the same keys as the table above. Add `NOTION_TOKEN` as a **Secret**. Never set `NOTION_API_BASE` (local testing only).
+5. Redeploy, then change the Link formula in the client's Team database to the new address (`https://<project>.pages.dev/me.html?key=…`).
+6. Optional: **Custom domains** → e.g. `training.clientdomain.com`.
+
+Every push to `main` redeploys every connected client. Free plan: 100,000 API requests a day, unlimited page loads, 500 builds a month.
+
+Files: `functions/_adapter.js` (translates Cloudflare requests to the Vercel shape), `functions/api/[[path]].js` (routes `/api/*` to the handlers; add new endpoints there), `scripts/build-pages.mjs` (publishes only the HTML pages), `wrangler.toml`.
+
 ## Day-to-day
 
 - **New hire:** add them to Team with a Role. Copy their **Personal Link** from Notion and send it to them.

@@ -1,0 +1,7 @@
+# Cloudflare Pages settings. Vercel ignores this file.
+# Settings (NOTION_TOKEN, database IDs, ...) are NOT stored here: add them in the
+# Cloudflare dashboard under the project's Settings > Variables and secrets.
+name = "training-portal"
+pages_build_output_dir = "dist"
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]

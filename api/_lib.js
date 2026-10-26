@@ -51,8 +51,11 @@ export class NotionError extends Error {
   constructor(status, detail) { super(`Notion returned ${status}`); this.status = status; this.detail = detail; }
 }
 
+// NOTION_API_BASE is only for local testing against a mock Notion. Leave it unset in production.
+export const notionApiBase = () => process.env.NOTION_API_BASE || "https://api.notion.com/v1";
+
 async function notion(path, method, body) {
-  const r = await fetch(`https://api.notion.com/v1/${path}`, {
+  const r = await fetch(`${notionApiBase()}/${path}`, {
     method,
     headers: {
       Authorization: `Bearer ${process.env.NOTION_TOKEN}`,
