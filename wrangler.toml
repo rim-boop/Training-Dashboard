@@ -10,6 +10,10 @@ main = "cloudflare/worker.js"
 compatibility_date = "2025-04-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Keep the variables typed into the Cloudflare dashboard when a new version deploys from GitHub.
+# Without this, each deploy would wipe the plain-text ones (database IDs, TIMEZONE, ...).
+keep_vars = true
+
 # The pages (index.html, me.html, notion.html), copied into dist/ by `npm run build:pages`.
 [assets]
 directory = "./dist"
