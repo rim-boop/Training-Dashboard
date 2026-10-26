@@ -1,4 +1,4 @@
-// Runs the Vercel-style handlers in api/*.js on Cloudflare Pages Functions.
+// Runs the Vercel-style handlers in api/*.js on Cloudflare Workers.
 //
 // The handlers were written for Vercel: handler(req, res) with req.method / req.query /
 // req.body / req.headers and res.setHeader / res.status(..).json(..). This file builds

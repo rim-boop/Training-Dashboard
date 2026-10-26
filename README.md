@@ -55,25 +55,25 @@ Every quiz attempt is saved as a new Completions row, so the full history stays 
 | `DASHBOARD_PASSWORD` | Optional but recommended: protects the manager dashboard |
 | `TIMEZONE` | Optional, default `Asia/Dubai` |
 
-## Hosting on Cloudflare Pages (free, commercial use allowed)
+## Hosting on Cloudflare Workers (free, commercial use allowed)
 
-The same code runs on Vercel and on Cloudflare. On Cloudflare, `functions/_adapter.js` runs the `api/*.js` handlers unchanged.
+The same code runs on Vercel and on Cloudflare. On Cloudflare, `cloudflare/worker.js` serves the pages and runs the `api/*.js` handlers unchanged through `cloudflare/adapter.js`.
 
 Per client (the client owns the Cloudflare account, you are invited as a member):
 
 1. Client: sign up at cloudflare.com (Free plan), then **Manage Account → Members** → invite you as Administrator.
 2. Client: create a Notion integration and connect it to the training databases.
-3. You: in the client's account, **Workers & Pages → Create → Pages → Connect to Git** → this repo.
-   - Framework preset: **None**
+3. You: in the client's account, **Workers & Pages → Create application → Continue with GitHub** → this repo.
+   - Project name: **training-dashboard** (must match `name` in `wrangler.toml`)
    - Build command: `npm run build:pages`
-   - Build output directory: `dist`
-4. **Settings → Variables and secrets** (Production): the same keys as the table above. Add `NOTION_TOKEN` as a **Secret**. Never set `NOTION_API_BASE` (local testing only).
-5. Redeploy, then change the Link formula in the client's Team database to the new address (`https://<project>.pages.dev/me.html?key=…`).
-6. Optional: **Custom domains** → e.g. `training.clientdomain.com`.
+   - Deploy command: `npx wrangler deploy` (the default)
+4. **Settings → Variables and Secrets**: the same keys as the table above. Add `NOTION_TOKEN` as a **Secret**. Never set `NOTION_API_BASE` (local testing only).
+5. **Deployments → Retry build** so the settings apply, then change the Link formula in the client's Team database to the new address (`https://training-dashboard.<account>.workers.dev/me.html?key=…`). Old `me.html` links keep working (Cloudflare redirects them to `/me`, keeping the key).
+6. Optional: **Domains** → add e.g. `training.clientdomain.com`.
 
-Every push to `main` redeploys every connected client. Free plan: 100,000 API requests a day, unlimited page loads, 500 builds a month.
+Every push to `main` redeploys every connected client. Free plan: 100,000 requests a day, page files are served without counting against the limit.
 
-Files: `functions/_adapter.js` (translates Cloudflare requests to the Vercel shape), `functions/api/[[path]].js` (routes `/api/*` to the handlers; add new endpoints there), `scripts/build-pages.mjs` (publishes only the HTML pages), `wrangler.toml`.
+Files: `cloudflare/worker.js` (entry point; routes `/api/*` to the handlers, add new endpoints there), `cloudflare/adapter.js` (translates Cloudflare requests to the Vercel shape), `scripts/build-pages.mjs` (publishes only the HTML pages to `dist/`), `wrangler.toml`.
 
 ## Day-to-day
 

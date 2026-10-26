@@ -1,4 +1,4 @@
-// Cloudflare Pages build step: copy only the public pages into dist/.
+// Cloudflare build step: copy only the public pages into dist/.
 // Without this, Cloudflare would also publish the repo's other files (README, package.json, ...).
 import { mkdirSync, rmSync, readdirSync, copyFileSync } from "node:fs";
 

@@ -1,7 +1,19 @@
-# Cloudflare Pages settings. Vercel ignores this file.
+# Cloudflare Workers settings. Vercel ignores this file.
+#
+# "name" must match the Worker's name in the Cloudflare dashboard, or the build fails.
+# Name the project "training-dashboard" when creating it (or change this line to match).
+#
 # Settings (NOTION_TOKEN, database IDs, ...) are NOT stored here: add them in the
-# Cloudflare dashboard under the project's Settings > Variables and secrets.
-name = "training-portal"
-pages_build_output_dir = "dist"
+# Cloudflare dashboard under the Worker's Settings > Variables and Secrets.
+name = "training-dashboard"
+main = "cloudflare/worker.js"
 compatibility_date = "2025-04-01"
 compatibility_flags = ["nodejs_compat"]
+
+# The pages (index.html, me.html, notion.html), copied into dist/ by `npm run build:pages`.
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+
+[observability]
+enabled = true
