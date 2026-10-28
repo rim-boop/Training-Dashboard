@@ -1,184 +1,204 @@
 <!doctype html>
 <html lang="en">
-<title>Training &amp; Onboarding Portal</title>
+<title>Team Portal</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230E6E55'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
-  /* Layout: clinic-office ledger — header and tab bar, then one view at a time; status colour is the main signal */
+  /* Layout: app shell. Sidebar (Training / Onboarding) + top bar + one view at a time. Brand colour comes from /api/brand. */
   :root {
-    --bg: #f4f5f2;
+    --brand: #0E6E55;
+    --bg: #F7F6F2;
     --surface: #ffffff;
-    --surface-2: #eef0ec;
-    --fg: #1b231f;
-    --muted: #5d6963;
-    --line: #dde2dd;
-    --accent: #2c6a52;
+    --surface-2: #F3F2EC;
+    --fg: #1C2420;
+    --muted: #5A635E;
+    --line: #E6E3DA;
+    --accent: var(--brand);
     --accent-ink: #ffffff;
-    --ok: #3d8a63;     --ok-soft: #e1f0e7;
-    --soon: #b07a23;   --soon-soft: #f7ecd6;
-    --late: #b5443d;   --late-soft: #f8e3e1;
-    --miss: #74559f;   --miss-soft: #ece5f5;
-    --retake: #2f6fae; --retake-soft: #e2ecf8;
-    --update: #b0447a; --update-soft: #f8e2ee;
-    --na: #c9cec9;
-    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-    --body: "Figtree", "Segoe UI", system-ui, sans-serif;
-    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --accent-soft: color-mix(in srgb, var(--brand) 12%, white);
+    --ok: #05603A;     --ok-soft: #DCF5E7;
+    --soon: #93370D;   --soon-soft: #FEF0C7;
+    --late: #B42318;   --late-soft: #FEE4E2;
+    --miss: #475467;   --miss-soft: #EEF0F2;
+    --retake: #6B21A8; --retake-soft: #F3E8FF;
+    --update: #9D174D; --update-soft: #FCE7F3;
+    --sign: #1E40AF;   --sign-soft: #DBEAFE;
+    --na: #D6D3CA;
+    --body: "Inter", "Segoe UI", system-ui, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #111614; --surface: #19201d; --surface-2: #222a26; --fg: #e5ebe7; --muted: #9aa7a0; --line: #2c3631;
-      --accent: #6cbf98; --accent-ink: #0f1a15;
-      --ok: #6cc595; --ok-soft: #1c3227; --soon: #e0b062; --soon-soft: #362b17;
-      --late: #ec8a82; --late-soft: #3a1f1d; --miss: #b49ae0; --miss-soft: #2b2338; --retake: #8ab8ec; --retake-soft: #1b2a3d; --update: #ee9cc6; --update-soft: #3a1f2e; --na: #3a4540;
+      --bg: #121614; --surface: #1A201D; --surface-2: #222a26; --fg: #E7ECE9; --muted: #A1ACA6; --line: #2E3833;
+      --accent: color-mix(in srgb, var(--brand) 55%, white); --accent-ink: #0F1A15; --accent-soft: color-mix(in srgb, var(--brand) 30%, #1A201D);
+      --ok: #6CC595; --ok-soft: #1C3227; --soon: #E0B062; --soon-soft: #362B17; --late: #EC8A82; --late-soft: #3A1F1D;
+      --miss: #B4BCC6; --miss-soft: #2A3034; --retake: #C9A6EE; --retake-soft: #2E2340; --update: #EE9CC6; --update-soft: #3A1F2E; --sign: #9DB8F2; --sign-soft: #1D2A44; --na: #3A4540;
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #111614; --surface: #19201d; --surface-2: #222a26; --fg: #e5ebe7; --muted: #9aa7a0; --line: #2c3631;
-    --accent: #6cbf98; --accent-ink: #0f1a15;
-    --ok: #6cc595; --ok-soft: #1c3227; --soon: #e0b062; --soon-soft: #362b17;
-    --late: #ec8a82; --late-soft: #3a1f1d; --miss: #b49ae0; --miss-soft: #2b2338; --retake: #8ab8ec; --retake-soft: #1b2a3d; --update: #ee9cc6; --update-soft: #3a1f2e; --na: #3a4540;
+    --bg: #121614; --surface: #1A201D; --surface-2: #222a26; --fg: #E7ECE9; --muted: #A1ACA6; --line: #2E3833;
+    --accent: color-mix(in srgb, var(--brand) 55%, white); --accent-ink: #0F1A15; --accent-soft: color-mix(in srgb, var(--brand) 30%, #1A201D);
+    --ok: #6CC595; --ok-soft: #1C3227; --soon: #E0B062; --soon-soft: #362B17; --late: #EC8A82; --late-soft: #3A1F1D;
+    --miss: #B4BCC6; --miss-soft: #2A3034; --retake: #C9A6EE; --retake-soft: #2E2340; --update: #EE9CC6; --update-soft: #3A1F2E; --sign: #9DB8F2; --sign-soft: #1D2A44; --na: #3A4540;
     color-scheme: dark;
   }
 
   * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--fg);
-    font: 15px/1.5 var(--body);
-    padding-left: max(16px, env(safe-area-inset-left, 0px));
-    padding-right: max(16px, env(safe-area-inset-right, 0px));
-    padding-block: 28px 56px;
-  }
-  .wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 20px; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14.5px/1.5 var(--body); }
   button { font: inherit; color: inherit; }
+  a { color: var(--accent); }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-  /* Header */
-  .head { display: flex; gap: 14px; align-items: flex-start; }
-  .logo { width: 44px; height: 44px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; flex: none; }
-  .logo svg { width: 22px; height: 22px; }
-  .head h1 { font: 600 clamp(24px, 4vw, 30px)/1.15 var(--display); margin: 0; text-wrap: balance; }
-  .head p { margin: 2px 0 0; color: var(--muted); max-width: 62ch; }
-  .fresh { display: flex; align-items: baseline; gap: 8px; color: var(--muted); font-size: 13px; margin-top: 8px; }
-  #view { display: grid; gap: 16px; min-width: 0; }
-  .fresh .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; transform: translateY(-1px); }
-  .fresh .dot.warn { background: var(--soon); }
+  /* App shell */
+  .app { display: flex; min-height: 100vh; }
+  .side { width: 248px; flex: none; background: var(--surface); border-right: 1px solid var(--line); padding: 20px 12px; display: flex; flex-direction: column; gap: 2px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 4px 10px 14px; min-width: 0; }
+  .brand .mark { width: 36px; height: 36px; border-radius: 9px; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 16px; flex: none; overflow: hidden; }
+  .brand .mark img { width: 100%; height: 100%; object-fit: cover; }
+  .brand .bn { font-weight: 700; font-size: 15px; line-height: 1.2; overflow-wrap: anywhere; }
+  .brand .bs { font-size: 12px; color: var(--muted); }
+  .sec { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 18px 12px 6px; }
+  .nav { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--fg); opacity: .85; font-weight: 500; font-size: 14px; cursor: pointer; text-align: left; }
+  .nav svg { width: 18px; height: 18px; flex: none; }
+  .nav:hover { background: var(--surface-2); opacity: 1; }
+  .nav[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; opacity: 1; }
+  .nav .cnt { margin-left: auto; font-size: 12px; font-weight: 600; background: var(--surface-2); color: var(--muted); border-radius: 999px; padding: 1px 8px; }
+  #grp-onboarding:not([hidden]) { display: contents; }
+  .side .foot { margin-top: auto; padding: 16px 12px 0; font-size: 12px; color: var(--muted); }
+  .mainc { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 32px; background: var(--surface); border-bottom: 1px solid var(--line); }
+  .fresh { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  .fresh .dot { width: 8px; height: 8px; border-radius: 50%; background: #12B76A; flex: none; }
+  .fresh .dot.warn { background: #F79009; }
   .fresh .dot.err { background: var(--late); }
-  .who { font-size: 13px; color: var(--muted); margin-top: 4px; }
-  .who b { color: var(--fg); font-weight: 600; }
+  .who { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .who .wn { display: grid; line-height: 1.3; }
+  .who .wn b { font-weight: 600; }
+  .who .wn span { color: var(--muted); font-size: 12px; }
+  .content { padding: 28px 32px 56px; max-width: 1200px; width: 100%; display: grid; gap: 20px; }
+  .ph h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+  .ph p { margin: 4px 0 0; color: var(--muted); }
+  @media (max-width: 860px) {
+    .app { flex-direction: column; }
+    .side { width: auto; height: auto; position: static; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px; padding: 12px; border-right: 0; border-bottom: 1px solid var(--line); }
+    .brand { width: 100%; padding: 2px 4px 8px; }
+    .sec, .side .foot { display: none; }
+    .nav { width: auto; padding: 8px 10px; }
+    .top, .content { padding-left: 16px; padding-right: 16px; }
+  }
+  #view { display: grid; gap: 20px; min-width: 0; }
   .toast { position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 500; font-size: 14px; z-index: 20; max-width: calc(100% - 32px); }
-  .signrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); flex-wrap: wrap; }
-  .signrow .acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .btn.small { padding: 6px 12px; font-size: 13px; }
-  .btn.ok { background: var(--ok); color: #fff; border-color: var(--ok); }
   .link { font-size: 13px; color: var(--muted); }
-  .fresh code { font-family: var(--mono); font-size: 12px; }
-
-  /* Tabs */
-  .tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; justify-self: start; max-width: 100%; }
-  .tabgroups { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-end; }
-  .tgroup { display: grid; gap: 6px; min-width: 0; max-width: 100%; }
-  .glabel { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding-left: 4px; }
-  .tab { border: 0; background: transparent; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 500; color: var(--muted); white-space: nowrap; }
-  .tab[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
 
   /* Cards and stats */
-  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-  @media (max-width: 760px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 4px; align-content: start; }
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  @media (max-width: 900px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; display: grid; gap: 6px; align-content: start; }
   .stat .k { font-size: 13px; color: var(--muted); font-weight: 500; }
-  .stat .v { font: 600 32px/1 var(--display); font-variant-numeric: tabular-nums; }
-  .stat .s { font-size: 13px; color: var(--muted); }
-  .v.ok { color: var(--ok); } .v.soon { color: var(--soon); } .v.late { color: var(--late); } .v.miss { color: var(--miss); } .v.retake { color: var(--retake); }
+  .stat .v { font-size: 30px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .stat .v small { font-size: 15px; font-weight: 500; color: var(--muted); }
+  .stat .s { font-size: 12.5px; color: var(--muted); }
+  .v.late { color: var(--late); } .v.soon { color: var(--soon); } .v.ok { color: var(--ok); }
+  .bar { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; min-width: 60px; }
+  .bar > i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
 
-  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 14px; min-width: 0; }
-  .panel h2 { font: 600 19px/1.25 var(--display); margin: 0; }
-  .panel .sub { color: var(--muted); margin: -8px 0 0; font-size: 14px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 14px; min-width: 0; align-content: start; }
+  .panel h2 { font-size: 16px; font-weight: 600; margin: 0; }
+  .panel .sub { color: var(--muted); margin: -8px 0 0; font-size: 13px; }
+  .split { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+  @media (max-width: 1100px) { .split { grid-template-columns: minmax(0, 1fr); } }
 
-  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
-  .legend span { display: inline-flex; align-items: center; gap: 6px; }
-  .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
+  /* Status chips */
+  .chip, .badge, .pill, .tag { display: inline-flex; align-items: center; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; background: var(--surface-2); color: var(--muted); justify-self: start; }
+  .k-ok { background: var(--ok-soft); color: var(--ok); } .k-soon { background: var(--soon-soft); color: var(--soon); }
+  .k-late { background: var(--late-soft); color: var(--late); } .k-missing { background: var(--miss-soft); color: var(--miss); }
+  .k-retake { background: var(--retake-soft); color: var(--retake); } .k-update { background: var(--update-soft); color: var(--update); }
+  .k-signoff { background: var(--sign-soft); color: var(--sign); }
+  .sw { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
   .st-ok { background: var(--ok); } .st-soon { background: var(--soon); } .st-late { background: var(--late); }
-  .st-missing { background: var(--miss); } .st-retake { background: var(--retake); } .st-update { background: var(--update); }
-  .st-signoff { background: transparent; box-shadow: inset 0 0 0 3px var(--ok); } .st-na { background: var(--na); }
+  .st-missing { background: var(--miss); } .st-retake { background: var(--retake); } .st-update { background: var(--update); } .st-signoff { background: var(--sign); } .st-na { background: var(--na); }
 
-  /* Heatmap */
-  .scroll-x { overflow-x: auto; }
-  table.heat { border-collapse: separate; border-spacing: 0; width: auto; }
-  .heat th, .heat td { padding: 0; }
-  .heat thead th { vertical-align: bottom; padding: 0 4px 10px; }
-  .heat thead th.col { width: 40px; }
-  .heat thead th.col span {
-    writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap;
-    font-size: 12px; color: var(--muted); font-weight: 500; display: inline-block; max-height: 190px; overflow: hidden; text-overflow: ellipsis;
-  }
-  .heat tbody tr { border-top: 1px solid var(--line); }
-  .heat tbody td { border-top: 1px solid var(--line); height: 52px; text-align: center; }
-  .heat td.who { text-align: left; padding-right: 24px; min-width: 210px; }
-  .rowbtn { display: flex; align-items: center; gap: 10px; border: 0; background: none; padding: 6px 0; cursor: pointer; text-align: left; width: 100%; }
-  .rowbtn:hover .nm { color: var(--accent); }
-  .nm { font-weight: 600; line-height: 1.2; }
-  .role { font-size: 12px; color: var(--muted); }
-  .cell { width: 24px; height: 24px; border-radius: 6px; display: inline-block; vertical-align: middle; }
-  .cell.st-na { background: transparent; border: 1px dashed var(--na); }
+  /* People table */
+  .tbl { overflow-x: auto; margin: 0 -20px -20px; }
+  .tbl table { width: 100%; min-width: 640px; border-collapse: collapse; }
+  .tbl th { text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); background: var(--surface-2); padding: 10px 20px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .tbl td { padding: 12px 20px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .tbl tr:last-child td { border-bottom: 0; }
+  .tbl tbody tr { cursor: pointer; }
+  .tbl tbody tr:hover { background: var(--surface-2); }
+  .progcell { display: flex; align-items: center; gap: 10px; min-width: 140px; }
+  .progcell .bar { flex: 1; }
+  .progcell span { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; width: 34px; }
+  .nextc { display: grid; font-size: 13px; }
+  .nextc span { font-size: 12px; color: var(--muted); }
+  .rowbtn { display: flex; align-items: center; gap: 12px; border: 0; background: none; padding: 0; cursor: pointer; text-align: left; }
+  .nm { font-weight: 600; line-height: 1.25; }
+  .role { font-size: 12.5px; color: var(--muted); }
 
-  .av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 600; font-size: 13px; flex: none; letter-spacing: .02em; }
+  .av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 12.5px; flex: none; }
   .av.lg { width: 48px; height: 48px; font-size: 16px; }
+
+  /* Waiting for you */
+  .todo { display: grid; }
+  .todo > div { display: grid; gap: 10px; padding: 14px 0; border-top: 1px solid var(--line); }
+  .todo > div:first-child { border-top: 0; padding-top: 0; }
+  .todo .tt { font-size: 14px; }
+  .todo .tt b { font-weight: 600; }
+  .todo .ta { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .signrow { display: grid; gap: 10px; }
+  .signrow .acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
   /* Lists */
   .group { display: grid; gap: 8px; }
   .group h3 { font-size: 13px; font-weight: 600; margin: 4px 0 0; display: flex; align-items: center; gap: 8px; }
-  .group h3 .sw { border-radius: 50%; width: 9px; height: 9px; }
   .items { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
-  .item {
-    display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-left: 4px solid var(--na);
-    border-radius: 0 8px 8px 0; background: var(--surface-2); color: inherit; text-decoration: none; min-width: 0;
-  }
-  a.item:hover { border-color: var(--accent); border-left-color: inherit; }
-  .item.k-ok { border-left-color: var(--ok); } .item.k-soon { border-left-color: var(--soon); }
-  .item.k-late { border-left-color: var(--late); } .item.k-missing { border-left-color: var(--miss); } .item.k-retake { border-left-color: var(--retake); } .item.k-update { border-left-color: var(--update); } .item.k-signoff { border-left-color: var(--ok); }
+  .item { display: grid; gap: 4px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: inherit; text-decoration: none; min-width: 0; }
+  a.item:hover { border-color: var(--accent); }
   .item .t { font-weight: 600; overflow-wrap: anywhere; }
-  .item .d { font: 12.5px/1.4 var(--mono); color: var(--muted); }
-  .chip.extra { background: var(--surface); color: var(--muted); border: 1px solid var(--line); }
-  .chip { display: inline-block; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--soon-soft); color: var(--soon); justify-self: start; margin-top: 4px; }
+  .item .d { font-size: 12.5px; color: var(--muted); }
+  .chip.extra { background: var(--surface-2); color: var(--muted); }
 
   .people { display: grid; gap: 6px; }
-  .person { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); color: inherit; text-decoration: none; flex-wrap: wrap; }
+  .person { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); color: inherit; text-decoration: none; flex-wrap: wrap; }
+  a.person:hover { border-color: var(--accent); }
   .person .l { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .person .d { font: 12.5px/1.4 var(--mono); color: var(--muted); }
+  .person .d { font-size: 12.5px; color: var(--muted); }
 
   .pick { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
   .pick label { font-size: 13px; color: var(--muted); font-weight: 500; }
   select { font: inherit; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); max-width: 100%; }
 
   .profile { display: flex; gap: 14px; align-items: center; }
-  .profile h2 { font-size: 22px; }
+  .profile h2 { font-size: 20px; }
   .facts { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--muted); }
   .facts b { color: var(--fg); font-variant-numeric: tabular-nums; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 14px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--fg); text-decoration: none; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.small { padding: 5px 12px; }
+  .btn.ok { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .primary { border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; justify-self: start; }
+  .primary:hover { filter: brightness(1.08); }
+  .filters { display: inline-flex; gap: 2px; padding: 3px; border-radius: 9px; background: var(--surface-2); flex-wrap: wrap; }
+  .filters button { border: 0; background: transparent; padding: 6px 12px; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .filters button[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 2px rgba(16,24,40,.1); }
 
   /* Calendar */
   .calbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
   .calnav { display: flex; gap: 8px; align-items: center; }
   .calnav h2 { min-width: 9.5em; text-align: center; }
-  .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-weight: 500; }
-  .btn:hover { border-color: var(--accent); }
-  .filters { display: inline-flex; gap: 4px; padding: 3px; border-radius: 10px; background: var(--surface-2); flex-wrap: wrap; }
-  .filters button { border: 0; background: transparent; padding: 6px 12px; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--muted); }
-  .filters button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
   .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
   .cal .dow { font-size: 12px; color: var(--muted); text-align: center; font-weight: 500; padding-bottom: 2px; }
   .day { min-height: 92px; border-radius: 8px; background: var(--surface-2); padding: 6px; display: grid; align-content: start; gap: 4px; min-width: 0; }
   .day.out { background: transparent; border: 1px dashed var(--line); }
   .day.today { outline: 2px solid var(--accent); outline-offset: -2px; }
-  .day .n { font: 500 12px var(--mono); color: var(--muted); }
+  .day .n { font-size: 12px; font-weight: 500; color: var(--muted); }
   .ev { font-size: 11.5px; line-height: 1.25; padding: 3px 6px; border-radius: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ev.k-late { background: var(--late-soft); color: var(--late); }
-  .ev.k-soon { background: var(--soon-soft); color: var(--soon); }
-  .ev.k-ok { background: var(--ok-soft); color: var(--ok); }
   .more { font-size: 11px; color: var(--muted); }
   @media (max-width: 640px) {
     .day { min-height: 54px; padding: 4px; }
@@ -188,91 +208,80 @@
     .more { display: none; }
   }
   .agenda { display: grid; gap: 6px; }
-  .agenda .row { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); color: inherit; text-decoration: none; }
-  .agenda .date { font: 500 12.5px var(--mono); color: var(--muted); }
+  .agenda .row { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); color: inherit; text-decoration: none; }
+  .agenda .date { font-size: 12.5px; font-weight: 500; color: var(--muted); }
   .agenda .what { min-width: 0; overflow-wrap: anywhere; }
-  .badge { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
-  .badge.k-late { background: var(--late-soft); color: var(--late); }
-  .badge.k-soon { background: var(--soon-soft); color: var(--soon); }
-  .badge.k-ok { background: var(--ok-soft); color: var(--ok); }
   @media (max-width: 520px) { .agenda .row { grid-template-columns: minmax(0, 1fr) auto; } .agenda .date { grid-column: 1 / -1; } }
 
-  .empty { color: var(--muted); padding: 8px 0; }
-  .notice { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 20px; display: grid; gap: 10px; max-width: 520px; }
-  .notice h2 { font: 600 19px var(--display); margin: 0; }
+  .empty { color: var(--muted); padding: 8px 0; margin: 0; }
+  .notice { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 24px; display: grid; gap: 10px; max-width: 520px; }
+  .notice h2 { font-size: 18px; font-weight: 600; margin: 0; }
+  .notice p { margin: 0; }
   .notice input { font: inherit; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
   .notice .err { color: var(--late); font-size: 14px; }
-  .primary { border: 0; background: var(--accent); color: var(--accent-ink); padding: 9px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; justify-self: start; }
-  .skeleton { height: 120px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
-  @media (prefers-reduced-motion: no-preference) { .view { animation: fade .18s ease-out; } @keyframes fade { from { opacity: .4 } to { opacity: 1 } } }
+  .skeleton { height: 110px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+  @media (prefers-reduced-motion: no-preference) { #view { animation: fade .18s ease-out; } @keyframes fade { from { opacity: .4 } to { opacity: 1 } } }
+
   /* Onboarding */
-  .bar { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; min-width: 80px; }
-  .bar > i { display: block; height: 100%; background: var(--ok); border-radius: inherit; }
-  .hires { display: grid; gap: 10px; }
-  .hire { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 10px; background: var(--surface-2); border: 1px solid transparent; text-align: left; width: 100%; cursor: pointer; }
-  .hire:hover, .hire[aria-current="true"] { border-color: var(--accent); }
-  .hire .l { display: flex; gap: 10px; align-items: center; min-width: 0; }
-  .hire .prog { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
+  .hires { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+  .hire { display: grid; gap: 12px; padding: 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); text-align: left; width: 100%; cursor: pointer; }
+  .hire:hover { border-color: var(--accent); }
+  .hire[aria-current="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .hire .l { display: flex; gap: 12px; align-items: center; min-width: 0; }
+  .hire .l > span:nth-child(2) { flex: 1; min-width: 0; }
+  .hire .prog { display: grid; gap: 6px; font-size: 12.5px; color: var(--muted); }
   .hire .prog b { color: var(--fg); font-variant-numeric: tabular-nums; }
-  @media (max-width: 640px) { .hire { grid-template-columns: minmax(0, 1fr) auto; } .hire .prog { grid-column: 1 / -1; } }
-  .pill { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: var(--surface); color: var(--muted); border: 1px solid var(--line); }
-  .pill.late { background: var(--late-soft); color: var(--late); border-color: transparent; }
-  .pill.done { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
   .phase { display: grid; gap: 6px; }
-  .phase h3 { font-size: 13px; font-weight: 600; margin: 6px 0 0; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-  .task { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); }
-  .task input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--ok); cursor: pointer; }
+  .phase h3 { font-size: 12px; font-weight: 600; margin: 8px 0 2px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .task { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); }
+  .task input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent); cursor: pointer; }
   .task input:disabled { cursor: not-allowed; }
-  .task .tn { overflow-wrap: anywhere; }
+  .task .tn { overflow-wrap: anywhere; font-weight: 500; }
   .task.is-done .tn { color: var(--muted); text-decoration: line-through; }
-  .task .tm { font: 12px/1.4 var(--mono); color: var(--muted); margin-top: 2px; }
+  .task .tm { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
   .task .tm a { color: var(--accent); }
-  .tag { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
-  .tag.hr { background: var(--late-soft); color: var(--late); } .tag.nh { background: var(--retake-soft); color: var(--retake); }
-  .tag.late { background: var(--late); color: #fff; } .tag.soon { background: var(--soon-soft); color: var(--soon); }
+  .tag { font-size: 11.5px; padding: 2px 8px; }
+  .tag.hr { background: var(--soon-soft); color: var(--soon); } .tag.nh { background: var(--accent-soft); color: var(--accent); }
+  .tag.late { background: var(--late-soft); color: var(--late); } .tag.soon { background: var(--soon-soft); color: var(--soon); }
+  .pill.late { background: var(--late-soft); color: var(--late); } .pill.done { background: var(--ok-soft); color: var(--ok); }
   .task .tn button { border: 0; background: none; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
   .task .tn button:hover { color: var(--accent); text-decoration: underline; }
-  .desc { grid-column: 2 / -1; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; font-size: 14px; }
+  .desc { grid-column: 2 / -1; background: var(--surface-2); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; font-size: 14px; }
   .desc > * { margin: 0; } .desc ul, .desc ol { padding-left: 1.3em; margin: 0; }
-  .desc h4, .desc h5 { margin: 0; font: 600 15px/1.3 var(--display); }
-  .desc .call { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; }
+  .desc h4, .desc h5 { margin: 0; font-size: 15px; font-weight: 600; }
+  .desc .call { background: var(--surface); border-radius: 8px; padding: 10px 12px; }
   .desc img { max-width: 100%; border-radius: 6px; }
 </style>
 
-<div class="wrap">
-  <header class="head">
-    <div class="logo" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h13"/></svg>
+<div class="app">
+  <aside class="side" aria-label="Menu">
+    <div class="brand"><span class="mark" id="brandMark" aria-hidden="true">·</span><span><span class="bn" id="brandName">Team portal</span><br><span class="bs">Team portal</span></span></div>
+    <div class="sec">Training</div>
+    <div role="tablist" aria-label="Training" style="display:contents">
+      <button class="tab nav" role="tab" id="tab-overview" data-tab="overview" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Overview</button>
+      <button class="tab nav" role="tab" id="tab-employees" data-tab="employees" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.8.7 3 2.4 3.5 5.2"/></svg>People</button>
+      <button class="tab nav" role="tab" id="tab-trainings" data-tab="trainings" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"/></svg>Trainings</button>
+      <button class="tab nav" role="tab" id="tab-calendar" data-tab="calendar" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Calendar</button>
     </div>
-    <div>
-      <h1>Training &amp; Onboarding Portal</h1>
-      <p>Staff training, sign-offs and new-hire onboarding in one place, read live from Notion.</p>
+    <div id="grp-onboarding" hidden>
+      <div class="sec">Onboarding</div>
+      <button class="tab nav" role="tab" id="tab-onboarding" data-tab="onboarding" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10" cy="8" r="3.5"/><path d="M3.5 20c.8-3.5 3.4-5.5 6.5-5.5 1.6 0 3 .5 4.2 1.4"/><path d="M18 14v6M15 17h6"/></svg>New hires<span class="cnt" id="hireCount" hidden></span></button>
+    </div>
+    <div class="foot">Powered by The Founder Boost</div>
+  </aside>
+
+  <div class="mainc">
+    <header class="top">
       <div class="fresh" id="fresh"><span class="dot warn" id="dot"></span><span id="freshText">Loading from Notion…</span></div>
       <div class="who" id="who" hidden></div>
+    </header>
+    <div class="content">
+      <div class="ph"><h1 id="pageTitle">Training overview</h1><p id="pageSub"></p></div>
+      <main id="view" aria-live="polite">
+        <div class="stats"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+      </main>
     </div>
-  </header>
-
-  <nav class="tabgroups" aria-label="Views">
-    <div class="tgroup">
-      <span class="glabel">Training</span>
-      <div class="tabs" role="tablist" aria-label="Training">
-        <button class="tab" role="tab" id="tab-overview" data-tab="overview" aria-selected="true">Overview</button>
-        <button class="tab" role="tab" id="tab-employees" data-tab="employees" aria-selected="false">By Employee</button>
-        <button class="tab" role="tab" id="tab-trainings" data-tab="trainings" aria-selected="false">By Training</button>
-        <button class="tab" role="tab" id="tab-calendar" data-tab="calendar" aria-selected="false">Calendar</button>
-      </div>
-    </div>
-    <div class="tgroup" id="grp-onboarding" hidden>
-      <span class="glabel">Onboarding</span>
-      <div class="tabs" role="tablist" aria-label="Onboarding">
-        <button class="tab" role="tab" id="tab-onboarding" data-tab="onboarding" aria-selected="false">New hires</button>
-      </div>
-    </div>
-  </nav>
-
-  <main id="view" class="view" aria-live="polite">
-    <div class="stats"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
-  </main>
+  </div>
 </div>
 
 <script>
@@ -310,9 +319,9 @@ function dayDiff(a, b) { return Math.round((a - b) / 86400000); }
 function fmt(d) { return d ? d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : ""; }
 function iso(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
 function initials(name) { return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join(""); }
-const AV = ["#2c6a52", "#3a6ea5", "#9a5b2e", "#7a4f9a", "#a5465e", "#4f7a3a", "#56606a", "#2f7f86"];
+const AV = [["#E0F2FE", "#075985"], ["#FCE7F6", "#9E1F63"], ["#DCF5E7", "#05603A"], ["#FEF0C7", "#93370D"], ["#FDE8D7", "#93370D"], ["#EEEBFF", "#4A1FB8"], ["#E6F4F1", "#0E5E4A"], ["#F2F4F7", "#344054"]];
 function avColor(name) { let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0; return AV[h % AV.length]; }
-function avatar(name, lg) { return `<span class="av${lg ? " lg" : ""}" style="background:${avColor(name)}" aria-hidden="true">${esc(initials(name))}</span>`; }
+function avatar(name, lg) { const [bg, fg] = avColor(name); return `<span class="av${lg ? " lg" : ""}" style="background:${bg};color:${fg}" aria-hidden="true">${esc(initials(name))}</span>`; }
 function plural(n, w) { return `${n} ${w}${n === 1 ? "" : "s"}`; }
 function freqText(t) { return t.frequency > 0 ? `Every ${plural(t.frequency, "month")}` : "One-time training"; }
 
@@ -369,56 +378,64 @@ function detail(c) {
 function viewOverview(m) {
   const n = m.staff.length;
   const full = m.perStaff.filter(p => p.total > 0 && p.ok === p.total).length;
-  const nonCompliant = m.perStaff.filter(p => p.late + p.missing + p.retake + p.update > 0).length;
-  const actionOnly = m.perStaff.filter(p => p.late + p.missing + p.retake + p.update === 0 && p.soon + p.signoff > 0).length;
+  const attention = m.perStaff.filter(p => p.late + p.missing + p.retake + p.update > 0).length;
   const soon = m.items.filter(i => i.status === "soon").length;
   const late = m.items.filter(i => i.status === "late").length;
   const valid = m.items.filter(i => i.status === "ok" || i.status === "soon").length;
   const pct = m.items.length ? Math.round(valid / m.items.length * 100) : 0;
   const pending = m.items.filter(i => i.status === "signoff");
   const retakes = m.items.filter(i => i.status === "retake");
+  const overdue = m.items.filter(i => i.status === "late").sort((a, b) => a.days - b.days);
 
-  const head = m.trainings.map(t => `<th class="col" scope="col" title="${esc(t.name)}"><span>${esc(t.name)}</span></th>`).join("");
-  const rows = m.staff.map(s => `<tr>
-      <td class="who"><button class="rowbtn" data-emp="${esc(s.id)}">${avatar(s.name)}<span><span class="nm">${esc(s.name)}</span><br><span class="role">${esc(s.role || "No role")}</span></span></button></td>
-      ${m.trainings.map(t => { const c = m.cells[s.id][t.id];
-        const tip = c.status === "na" ? `${t.name}: not applicable` : `${t.name}: ${STATUS[c.status].label} — ${detail(c)}`;
-        return `<td><span class="cell st-${c.status}" title="${esc(tip)}" role="img" aria-label="${esc(tip)}"></span></td>`; }).join("")}
-    </tr>`).join("");
+  const rank = s => STATUS[s].order;
+  const rows = m.perStaff.map(p => {
+    const open = p.mine.filter(i => i.status !== "ok").sort((a, b) => rank(a.status) - rank(b.status) || (a.due || 0) - (b.due || 0));
+    const worst = open[0];
+    const doneN = p.ok + p.soon;
+    return { p, worst, doneN, pct: p.total ? Math.round(doneN / p.total * 100) : 0, r: worst ? rank(worst.status) : 99 };
+  }).sort((a, b) => a.r - b.r || a.p.s.name.localeCompare(b.p.s.name));
+
+  const table = `<div class="tbl"><table>
+    <thead><tr><th scope="col">Name</th><th scope="col">Progress</th><th scope="col">Status</th><th scope="col">Next item</th></tr></thead>
+    <tbody>${rows.map(({ p, worst, doneN, pct }) => `<tr data-emp="${esc(p.s.id)}">
+      <td><button class="rowbtn" type="button" data-emp="${esc(p.s.id)}">${avatar(p.s.name)}<span><span class="nm">${esc(p.s.name)}</span><br><span class="role">${esc(p.s.role || "No role")}</span></span></button></td>
+      <td><div class="progcell"><span class="bar"><i style="width:${pct}%"></i></span><span>${doneN}/${p.total}</span></div></td>
+      <td>${p.total ? `<span class="chip k-${worst ? worst.status : "ok"}">${worst ? STATUS[worst.status].label : "Up to date"}</span>` : `<span class="chip">Nothing assigned</span>`}</td>
+      <td>${worst ? `<div class="nextc">${esc(worst.training.name)}<span>${esc(detail(worst))}</span></div>` : `<span class="role">—</span>`}</td>
+    </tr>`).join("")}</tbody></table></div>`;
+
+  const todoN = pending.length + retakes.length + overdue.length;
+  const todo = todoN ? `<div class="todo">
+      ${pending.map(signRow).join("")}
+      ${retakes.map(i => todoRow(i, `scored ${i.score ?? "–"}% on <b>${esc(i.training.name)}</b>`, "retake", "Retake required")).join("")}
+      ${overdue.map(i => todoRow(i, `· <b>${esc(i.training.name)}</b>`, "late", `Overdue ${-i.days} ${-i.days === 1 ? "day" : "days"}`)).join("")}
+    </div>` : `<p class="empty">Nothing needs you right now.</p>`;
 
   return `
   <section class="stats" aria-label="Summary">
-    <div class="stat"><span class="k">Staff tracked</span><span class="v">${n}</span><span class="s">${plural(m.trainings.length, "training")} tracked</span></div>
-    <div class="stat"><span class="k">Fully compliant</span><span class="v ok">${full}</span><span class="s">${nonCompliant} non-compliant · ${actionOnly} action needed</span></div>
-    <div class="stat"><span class="k">Needs action soon</span><span class="v soon">${soon}</span><span class="s">Due within ${DUE_SOON_DAYS} days${late ? ` · ${late} overdue` : ", nothing overdue"}</span></div>
-    <div class="stat"><span class="k">Overall completion rate</span><span class="v miss">${pct}%</span><span class="s">${valid} of ${m.items.length} tracked items</span></div>
+    <div class="stat"><span class="k">Team members</span><span class="v">${n}</span><span class="s">${plural(m.trainings.length, "training")} tracked</span></div>
+    <div class="stat"><span class="k">Fully up to date</span><span class="v">${full} <small>of ${n}</small></span><span class="s">${attention ? `${attention} ${attention === 1 ? "person needs" : "people need"} attention` : "Nobody is behind"}</span></div>
+    <div class="stat"><span class="k">Need attention</span><span class="v ${late ? "late" : ""}">${late + soon}</span><span class="s">${late} overdue · ${soon} due in ${DUE_SOON_DAYS} days</span></div>
+    <div class="stat"><span class="k">Completion</span><span class="v">${pct}%</span><span class="bar"><i style="width:${pct}%"></i></span><span class="s">${valid} of ${m.items.length} items up to date</span></div>
   </section>
+  <div class="split">
+    <section class="panel" aria-label="People">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><h2>People</h2><span class="link">Most urgent first · click a name to open</span></div>
+      ${n ? table : `<p class="empty">No active staff in the Team database yet.</p>`}
+    </section>
+    <section class="panel" aria-label="Waiting for you" id="signoff">
+      <div><h2>Waiting for you</h2><p class="sub" style="margin:4px 0 0">${todoN ? `${plural(todoN, "thing")} to look at${pending.length && !state.data.canSignOff ? ". Open your Manager Link to sign off." : ""}` : "You're all caught up"}</p></div>
+      ${todo}
+    </section>
+  </div>`;
+}
 
-  <section class="panel">
-    <h2>Training compliance heatmap</h2>
-    <p class="sub">Every staff member × every applicable training. Click a name to open that person.</p>
-    <div class="legend">
-      <span><i class="sw st-ok"></i>Compliant</span><span><i class="sw st-soon"></i>Due soon</span>
-      <span><i class="sw st-late"></i>Overdue</span><span><i class="sw st-missing"></i>Not completed</span><span><i class="sw st-retake"></i>Retake required</span><span><i class="sw st-update"></i>New version</span><span><i class="sw st-signoff"></i>Awaiting sign-off</span>
-      <span><i class="sw" style="border:1px dashed var(--na)"></i>Not applicable</span>
-    </div>
-    <div class="scroll-x"><table class="heat"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
-  </section>
-
-  ${retakes.length ? `<section class="panel">
-    <h2>Needs a retake</h2>
-    <p class="sub">Latest quiz attempt scored below the training's pass mark.</p>
-    <div class="people">${retakes.map(i => {
-      const u = safeUrl(i.rec.url); const tag = u ? "a" : "div";
-      return `<${tag} class="person"${u ? ` href="${esc(u)}" target="_blank" rel="noopener"` : ""}><span class="l">${avatar(i.staff.name)}<span><span class="nm">${esc(i.staff.name)}</span><br><span class="role">${esc(i.training.name)}</span></span></span><span class="d">${esc(detail(i))}</span></${tag}>`;
-    }).join("")}</div>
-  </section>` : ""}
-
-  ${pending.length ? `<section class="panel" id="signoff">
-    <h2>Waiting for manager sign-off</h2>
-    <p class="sub">${state.data.canSignOff ? "The employee has completed it. Sign off once you've seen them do it." : "Open the dashboard with your Manager Link to sign these off."}</p>
-    <div class="people">${pending.map(signRow).join("")}</div>
-  </section>` : ""}`;
+function todoRow(i, what, k, label) {
+  const u = i.rec ? safeUrl(i.rec.url) : null;
+  return `<div>
+    <div class="tt"><b>${esc(i.staff.name)}</b> ${what}</div>
+    <div class="ta"><span class="chip k-${k}">${esc(label)}</span>${u ? `<a class="btn small" href="${esc(u)}" target="_blank" rel="noopener">Open record</a>` : `<button class="btn small" type="button" data-emp="${esc(i.staff.id)}">Open person</button>`}</div>
+  </div>`;
 }
 
 function signRow(i) {
@@ -430,11 +447,11 @@ function signRow(i) {
     if (own) acts = `<span class="link">Another manager signs off your own training</span>`;
     else if (state.signing === i.recordId) acts = `<button class="btn small" type="button" disabled>Signing off…</button>`;
     else if (state.confirming === i.recordId) acts = `<span class="link">Sign off as ${esc(me.name)}?</span><button class="btn small ok" type="button" data-sign="${esc(i.recordId)}">Confirm</button><button class="btn small" type="button" data-cancel>Cancel</button>`;
-    else acts = `<button class="btn small primary" type="button" data-ask="${esc(i.recordId)}">Sign off</button>`;
+    else acts = `<button class="btn small ok" type="button" data-ask="${esc(i.recordId)}">Sign off</button>`;
   }
   return `<div class="signrow">
-    <span class="l" style="display:flex;gap:10px;align-items:center;min-width:0">${avatar(i.staff.name)}<span><span class="nm">${esc(i.staff.name)}</span><br><span class="role">${esc(i.training.name)} · completed ${fmt(i.done)}${i.score != null ? ` · scored ${i.score}%` : ""}</span></span></span>
-    <span class="acts">${u ? `<a class="link" href="${esc(u)}" target="_blank" rel="noopener">View record</a>` : ""}${acts}</span>
+    <div class="tt"><b>${esc(i.staff.name)}</b> finished <b>${esc(i.training.name)}</b>${i.score != null ? ` · ${i.score}%` : ""}</div>
+    <div class="ta"><span class="chip k-signoff">Awaiting sign-off</span><span class="acts">${u ? `<a class="link" href="${esc(u)}" target="_blank" rel="noopener">View</a>` : ""}${acts}</span></div>
   </div>`;
 }
 
@@ -484,7 +501,7 @@ function viewEmployees(m) {
   const opts = m.staff.map(x => `<option value="${esc(x.id)}"${x.id === s.id ? " selected" : ""}>${esc(x.name)}</option>`).join("");
   const sorted = [...p.mine].sort((a, b) => a.training.name.localeCompare(b.training.name));
   return `
-  <div class="pick"><label for="empSelect">Staff member</label><select id="empSelect">${opts}</select></div>
+  <div class="pick"><label for="empSelect">Person</label><select id="empSelect">${opts}</select></div>
   <section class="panel">
     <div class="profile">${avatar(s.name, true)}<div><h2>${esc(s.name)}</h2><div class="role">${esc(s.role || "No role")}${s.hireDate ? ` · hired ${fmt(parseDate(s.hireDate))}` : ""}</div></div></div>
     <div class="facts"><span><b>${p.total}</b> trainings tracked</span><span><b>${p.ok}</b> on track</span><span><b>${p.total - p.ok}</b> need attention</span><span><b>${pct}%</b> completion rate</span></div>
@@ -555,7 +572,7 @@ function viewCalendar(m) {
     <div class="stat"><span class="k">Overdue</span><span class="v late">${late.length}</span><span class="s">Past their due date</span></div>
     <div class="stat"><span class="k">Due in 7 days</span><span class="v soon">${within(7)}</span><span class="s">By ${fmt(new Date(now.getTime() + 7 * 864e5))}</span></div>
     <div class="stat"><span class="k">Due in 30 days</span><span class="v soon">${within(30)}</span><span class="s">By ${fmt(new Date(now.getTime() + 30 * 864e5))}</span></div>
-    <div class="stat"><span class="k">Due in 90 days</span><span class="v miss">${within(90)}</span><span class="s">By ${fmt(new Date(now.getTime() + 90 * 864e5))}</span></div>
+    <div class="stat"><span class="k">Due in 90 days</span><span class="v">${within(90)}</span><span class="s">By ${fmt(new Date(now.getTime() + 90 * 864e5))}</span></div>
   </section>
   <section class="panel">
     <div class="calbar">
@@ -593,30 +610,25 @@ function viewOnboarding() {
   if (!state.onbSel || !people.some(p => p.id === state.onbSel)) state.onbSel = (active[0] || people[0] || {}).id || null;
   const sel = people.find(p => p.id === state.onbSel);
 
-  const list = people.length ? `<div class="hires">${people.map(p => {
+  const list = people.length ? `<div class="hires" aria-label="New hires">${people.map(p => {
     const pct = p.all.total ? Math.round(p.all.done / p.all.total * 100) : 0;
     const right = !p.started ? `<span class="pill">Not started</span>`
       : p.all.done === p.all.total ? `<span class="pill done">Complete</span>`
       : p.all.late ? `<span class="pill late">${p.all.late} overdue</span>` : `<span class="pill">${pct}%</span>`;
     return `<button class="hire" type="button" data-onb="${esc(p.id)}" aria-current="${p.id === state.onbSel}">
-      <span class="l">${avatar(p.name)}<span><span class="nm">${esc(p.name)}</span><br><span class="role">${esc(p.role || "No role")}${p.hireDate ? ` · starts ${fmt(parseDate(p.hireDate))}` : " · no hire date"}${p.manager ? ` · with ${esc(p.manager)}` : ""}</span></span></span>
-      <span class="prog">${p.started ? `<span class="bar"><i style="width:${pct}%"></i></span><span>New hire <b>${p.newHire.done}/${p.newHire.total}</b> · HR &amp; Compliance <b>${p.hr.done}/${p.hr.total}</b></span>` : `<span>No tasks yet</span>`}</span>
-      ${right}
+      <span class="l">${avatar(p.name, true)}<span><span class="nm">${esc(p.name)}</span><br><span class="role">${esc(p.role || "No role")}${p.hireDate ? ` · starts ${fmt(parseDate(p.hireDate))}` : " · no hire date"}${p.manager ? ` · with ${esc(p.manager)}` : ""}</span></span>${right}</span>
+      <span class="prog">${p.started ? `<span style="display:flex;justify-content:space-between"><span>New hire <b>${p.newHire.done}/${p.newHire.total}</b> · HR <b>${p.hr.done}/${p.hr.total}</b></span><b>${p.all.done} of ${p.all.total} done</b></span><span class="bar" style="height:8px"><i style="width:${pct}%"></i></span>` : `<span>No tasks yet. Open to start their onboarding.</span>`}</span>
     </button>`;
   }).join("")}</div>` : `<p class="empty">Nobody is being onboarded. Set someone's Employment Status to “Onboarding” in the Team database and they'll appear here.</p>`;
 
   return `
   <section class="stats" aria-label="Onboarding summary">
     <div class="stat"><span class="k">Being onboarded</span><span class="v">${active.length}</span><span class="s">${finished} finished</span></div>
-    <div class="stat"><span class="k">Overdue tasks</span><span class="v ${lateTasks ? "late" : "ok"}">${lateTasks}</span><span class="s">Past their due date</span></div>
-    <div class="stat"><span class="k">HR tasks for you</span><span class="v soon">${forMe}</span><span class="s">${d.me.isAdmin ? "You're an admin" : "For people you onboard"}</span></div>
-    <div class="stat"><span class="k">Not started</span><span class="v miss">${people.filter(p => !p.started).length}</span><span class="s">Need their tasks created</span></div>
+    <div class="stat"><span class="k">Overdue tasks</span><span class="v ${lateTasks ? "late" : ""}">${lateTasks}</span><span class="s">Past their due date</span></div>
+    <div class="stat"><span class="k">HR tasks for you</span><span class="v">${forMe}</span><span class="s">${d.me.isAdmin ? "You're an admin" : "For people you onboard"}</span></div>
+    <div class="stat"><span class="k">Not started</span><span class="v">${people.filter(p => !p.started).length}</span><span class="s">Need their tasks created</span></div>
   </section>
-  <section class="panel">
-    <h2>New hires</h2>
-    <p class="sub">Tasks come from the Onboarding Task Library in Notion. Click someone to see their checklist, and a task name to read its description.</p>
-    ${list}
-  </section>
+  ${list}
   ${sel ? onboardingDetail(sel) : ""}`;
 }
 
@@ -646,7 +658,7 @@ function onboardingDetail(p) {
     </div>
     ${!p.canManage ? `<p class="sub" style="margin:0">View only. ${p.manager ? esc(p.manager) : "Their onboarding manager"} or an admin ticks these off.</p>` : ""}
     ${tasks.length ? phases.map(ph => `<div class="phase"><h3>${esc(ph)}</h3>${tasks.filter(t => (t.phase || "Other") === ph).map(t => taskRow(t, p)).join("")}</div>`).join("")
-      : `<p class="empty">${hiddenDone ? "Everything here is done. 🎉" : "No tasks in this list."}</p>`}
+      : `<p class="empty">${hiddenDone ? "Everything here is done." : "No tasks in this list."}</p>`}
     ${hiddenDone && tasks.length ? `<p class="link">${hiddenDone} done ${hiddenDone === 1 ? "task" : "tasks"} hidden · <button class="btn small" type="button" data-onb-open="0">Show everything</button></p>` : ""}
   </section>`;
 }
@@ -722,7 +734,13 @@ async function loadOnboarding() {
     if (!r.ok) throw new Error(body.message || "Couldn't load onboarding from Notion.");
     state.onb = body; state.onbErr = null;
   } catch (e) { if (!state.onb) state.onbErr = e.message; else toast(e.message); }
+  updateHireCount();
   if (state.tab === "onboarding") render();
+}
+function updateHireCount() {
+  const c = $("hireCount"); if (!c || !state.onb) return;
+  const n = state.onb.people.filter(p => !p.started || p.all.done < p.all.total).length;
+  c.hidden = !n; c.textContent = n;
 }
 
 async function onbPost(payload) {
@@ -763,8 +781,17 @@ async function toggleTask(box) {
 }
 
 // ---------- render ----------
+const TITLES = {
+  overview: ["Training overview", "Who's up to date, who needs a nudge, and what's waiting for you."],
+  employees: ["People", "One person's trainings, grouped by what needs doing."],
+  trainings: ["Trainings", "One training and where everyone stands on it."],
+  calendar: ["Calendar", "What's due and when."],
+  onboarding: ["New hires", "Everyone joining, their checklist and what HR still owes them."],
+};
 function render() {
   document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === state.tab)));
+  const [t, sub] = TITLES[state.tab] || TITLES.overview;
+  $("pageTitle").textContent = t; $("pageSub").textContent = sub;
   if (!state.model) return;
   const v = $("view");
   const html = state.tab === "employees" ? viewEmployees(state.model)
@@ -859,7 +886,7 @@ function accept(data) {
   state.model = compute(data);
   $("grp-onboarding").hidden = !data.onboarding;
   if (!data.onboarding && state.tab === "onboarding") state.tab = "overview";
-  if (state.tab === "onboarding" && !Object.keys(state.onbBusy).length && !state.onbStarting) loadOnboarding();
+  if (data.onboarding && (state.tab === "onboarding" || !state.onb) && !Object.keys(state.onbBusy).length && !state.onbStarting) loadOnboarding();
   render();
 }
 
@@ -879,9 +906,9 @@ async function load() {
     accept(body);
     const who = $("who"); who.hidden = false;
     who.innerHTML = body.me
-      ? `Signed in as <b>${esc(body.me.name)}</b> · <a href="/me.html?key=${encodeURIComponent(state.key)}">My own view</a>`
-      : "View only · open your Manager Link to sign off trainings";
-    setFresh("ok", `Live from Notion · updated ${esc(new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }))} · refreshes every minute`);
+      ? `<a class="btn small" href="/me.html?key=${encodeURIComponent(state.key)}">My own view</a>${avatar(body.me.name)}<span class="wn"><b>${esc(body.me.name)}</b><span>${body.me.isAdmin ? "Admin" : "Manager"}</span></span>`
+      : `<span class="chip">View only</span>`;
+    setFresh("ok", `Synced with Notion · ${esc(new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }))}`);
   } catch (err) {
     if (state.model) setFresh("err", `Couldn't refresh · showing data from earlier. ${esc(err.message)}`);
     else {
@@ -892,7 +919,23 @@ async function load() {
   }
 }
 
+async function loadBrand() {
+  try {
+    const r = await fetch("/api/brand");
+    if (!r.ok) return;
+    const b = await r.json();
+    if (b.color) document.documentElement.style.setProperty("--brand", b.color);
+    $("brandName").textContent = b.name;
+    document.title = `${b.name} · Team Portal`;
+    const mark = $("brandMark");
+    if (b.logo) mark.innerHTML = `<img src="${esc(b.logo)}" alt="">`; else mark.textContent = initials(b.name).slice(0, 1);
+    const ic = document.querySelector('link[rel="icon"]');
+    if (ic && b.color) ic.href = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='${b.color}'/></svg>`)}`;
+  } catch {}
+}
+
 (function start() {
+  loadBrand();
   const h = (location.hash || "").slice(1);
   if (["overview", "employees", "trainings", "calendar", "onboarding"].includes(h)) state.tab = h;
   try { state.password = sessionStorage.getItem("dash-pw"); } catch {}

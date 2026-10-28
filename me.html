@@ -6,60 +6,66 @@
 <meta name="robots" content="noindex">
 <title>My Portal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230E6E55'/%3E%3C/svg%3E">
 <style>
-  /* Layout: one column for phone or desk — my trainings by urgency; opening one shows its Notion lesson, then the quiz or confirmation */
+  /* Layout: one column for phone or desk. Brand bar, a welcome card, My onboarding / My trainings, then the list. Brand colour comes from /api/brand. */
   :root {
-    --bg: #f4f5f2; --surface: #ffffff; --surface-2: #eef0ec; --fg: #1b231f; --muted: #5d6963; --line: #dde2dd;
-    --accent: #2c6a52; --accent-ink: #ffffff;
-    --ok: #3d8a63; --ok-soft: #e1f0e7; --soon: #b07a23; --soon-soft: #f7ecd6;
-    --late: #b5443d; --late-soft: #f8e3e1; --miss: #74559f; --miss-soft: #ece5f5;
-    --retake: #2f6fae; --retake-soft: #e2ecf8; --update: #b0447a; --update-soft: #f8e2ee;
-    --n-blue: #2f6fae; --n-blue-bg: #e7f0f9; --n-yellow-bg: #fbf3db; --n-red-bg: #fbe8e6; --n-green-bg: #e6f2ea; --n-purple-bg: #f0eaf8; --n-pink-bg: #f9e8f1; --n-orange-bg: #fbeee0; --n-brown-bg: #f2ebe4;
-    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-    --body: "Figtree", "Segoe UI", system-ui, sans-serif;
-    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    --brand: #0E6E55;
+    --bg: #F7F6F2; --surface: #ffffff; --surface-2: #F3F2EC; --fg: #1C2420; --muted: #5A635E; --line: #E6E3DA;
+    --accent: var(--brand); --accent-ink: #ffffff; --accent-soft: color-mix(in srgb, var(--brand) 12%, white);
+    --ok: #05603A; --ok-soft: #DCF5E7; --soon: #93370D; --soon-soft: #FEF0C7;
+    --late: #B42318; --late-soft: #FEE4E2; --miss: #475467; --miss-soft: #EEF0F2;
+    --retake: #6B21A8; --retake-soft: #F3E8FF; --update: #9D174D; --update-soft: #FCE7F3; --sign: #1E40AF; --sign-soft: #DBEAFE;
+    --n-blue: #1E40AF; --n-blue-bg: #E7F0F9; --n-yellow-bg: #FBF3DB; --n-red-bg: #FBE8E6; --n-green-bg: #E6F2EA; --n-purple-bg: #F0EAF8; --n-pink-bg: #F9E8F1; --n-orange-bg: #FBEEE0; --n-brown-bg: #F2EBE4;
+    --body: "Inter", "Segoe UI", system-ui, sans-serif;
+    --display: var(--body);
+    --mono: var(--body);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #111614; --surface: #19201d; --surface-2: #222a26; --fg: #e5ebe7; --muted: #9aa7a0; --line: #2c3631;
-      --accent: #6cbf98; --accent-ink: #0f1a15;
-      --ok: #6cc595; --ok-soft: #1c3227; --soon: #e0b062; --soon-soft: #362b17;
-      --late: #ec8a82; --late-soft: #3a1f1d; --miss: #b49ae0; --miss-soft: #2b2338;
-      --retake: #8ab8ec; --retake-soft: #1b2a3d; --update: #ee9cc6; --update-soft: #3a1f2e;
+      --bg: #121614; --surface: #1A201D; --surface-2: #222a26; --fg: #E7ECE9; --muted: #A1ACA6; --line: #2E3833;
+      --accent: color-mix(in srgb, var(--brand) 55%, white); --accent-ink: #0F1A15; --accent-soft: color-mix(in srgb, var(--brand) 30%, #1A201D);
+      --ok: #6CC595; --ok-soft: #1C3227; --soon: #E0B062; --soon-soft: #362B17;
+      --late: #EC8A82; --late-soft: #3A1F1D; --miss: #B4BCC6; --miss-soft: #2A3034;
+      --retake: #C9A6EE; --retake-soft: #2E2340; --update: #EE9CC6; --update-soft: #3A1F2E; --sign: #9DB8F2; --sign-soft: #1D2A44;
       --n-blue: #8ab8ec; --n-blue-bg: #1b2a3d; --n-yellow-bg: #362f17; --n-red-bg: #3a1f1d; --n-green-bg: #1c3227; --n-purple-bg: #2b2338; --n-pink-bg: #3a1f2e; --n-orange-bg: #3a2a19; --n-brown-bg: #2f2822;
       color-scheme: dark;
     }
   }
   * { box-sizing: border-box; }
   body {
-    margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--body);
-    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-    padding-block: max(24px, env(safe-area-inset-top, 0px)) 56px;
+    margin: 0; background: var(--bg); color: var(--fg); font: 15.5px/1.55 var(--body);
   }
-  .wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 18px; }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--line); padding: max(14px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 14px max(16px, env(safe-area-inset-left, 0px)); }
+  .topbar .in { max-width: 760px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; min-width: 0; }
+  .brand .mark { width: 32px; height: 32px; border-radius: 8px; background: var(--brand); color: #fff; display: grid; place-items: center; font-size: 14px; flex: none; overflow: hidden; }
+  .brand .mark img { width: 100%; height: 100%; object-fit: cover; }
+  .av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 12.5px; flex: none; background: var(--accent-soft); color: var(--accent); }
+  .wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 18px; padding: 24px max(16px, env(safe-area-inset-right, 0px)) 56px max(16px, env(safe-area-inset-left, 0px)); }
   button, input { font: inherit; color: inherit; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   [hidden] { display: none !important; }
   a { color: var(--accent); }
 
-  .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
-  h1 { font: 600 clamp(26px, 6vw, 34px)/1.1 var(--display); margin: 2px 0 0; text-wrap: balance; }
+  .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  h1 { font: 700 clamp(24px, 5.5vw, 30px)/1.15 var(--display); margin: 2px 0 0; letter-spacing: -0.01em; text-wrap: balance; }
   .role { color: var(--muted); font-size: 14px; }
   .fresh { color: var(--muted); font-size: 13px; display: flex; gap: 8px; align-items: baseline; margin-top: 6px; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; transform: translateY(-1px); }
-  .dot.warn { background: var(--soon); } .dot.err { background: var(--late); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #12B76A; flex: none; transform: translateY(-1px); }
+  .dot.warn { background: #F79009; } .dot.err { background: var(--late); }
 
   .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
   .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 2px; }
   .stat b { font: 600 30px/1 var(--display); font-variant-numeric: tabular-nums; }
   .stat span { color: var(--muted); font-size: 13px; }
-  .stat.todo b { color: var(--soon); } .stat.wait b { color: var(--retake); } .stat.ok b { color: var(--ok); }
+  .stat.todo b { color: var(--fg); } .stat.wait b { color: var(--sign); } .stat.ok b { color: var(--ok); }
   @media (max-width: 420px) { .stat b { font-size: 24px; } .stat { padding: 12px; } }
 
   .list { display: grid; gap: 10px; }
   .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; }
-  .card.k-retake { border-color: var(--retake); } .card.k-late { border-color: var(--late); } .card.k-update { border-color: var(--update); }
+  .card.k-late { border-color: color-mix(in srgb, var(--late) 45%, var(--line)); }
   .row1 { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
   .name { font: 600 17px/1.3 var(--display); overflow-wrap: anywhere; }
   .meta { font: 13px/1.5 var(--mono); color: var(--muted); }
@@ -67,7 +73,7 @@
   .k-ok.pill { color: var(--ok); background: var(--ok-soft); } .k-soon.pill { color: var(--soon); background: var(--soon-soft); }
   .k-late.pill { color: var(--late); background: var(--late-soft); } .k-missing.pill { color: var(--miss); background: var(--miss-soft); }
   .k-retake.pill { color: var(--retake); background: var(--retake-soft); } .k-update.pill { color: var(--update); background: var(--update-soft); }
-  .k-signoff.pill { color: var(--ok); background: transparent; box-shadow: inset 0 0 0 1.5px var(--ok); }
+  .k-signoff.pill { color: var(--sign); background: var(--sign-soft); }
   .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 9px 14px; font-weight: 600; cursor: pointer; text-decoration: none; color: var(--fg); font-size: 15px; }
   .btn:hover { border-color: var(--accent); }
@@ -113,7 +119,7 @@
   .c-green { color: var(--ok); } .c-blue { color: var(--n-blue); } .c-red { color: var(--late); } .c-orange, .c-yellow { color: var(--soon); }
   .c-purple { color: var(--miss); } .c-pink { color: var(--update); } .c-gray, .c-brown { color: var(--muted); }
 
-  .finish { background: var(--surface); border: 2px solid var(--accent); border-radius: 12px; padding: 18px; display: grid; gap: 12px; }
+  .finish { background: var(--surface); border: 1px solid var(--accent); box-shadow: 0 0 0 1px var(--accent); border-radius: 12px; padding: 18px; display: grid; gap: 12px; }
   .finish h3 { font: 600 19px/1.25 var(--display); margin: 0; }
   .confirm-box { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 8px; background: var(--surface-2); cursor: pointer; font-weight: 500; }
   .confirm-box input { margin-top: 5px; accent-color: var(--accent); width: 18px; height: 18px; flex: none; }
@@ -142,18 +148,25 @@
   .empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; padding: 20px; color: var(--muted); }
   .skeleton { height: 96px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
   /* onboarding */
-  .switch { display: inline-flex; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; justify-self: start; }
-  .switch button { border: 0; background: transparent; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--muted); font-size: 15px; }
-  .switch button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-  .switch .n { font: 500 12px var(--mono); margin-left: 4px; opacity: .8; }
-  .ob-top { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; }
-  .ob-top .big { font: 600 22px/1.2 var(--display); }
-  .ob-top .bar i { background: var(--ok); }
+  .switch { display: flex; gap: 2px; padding: 3px; background: color-mix(in srgb, var(--line) 70%, var(--bg)); border-radius: 10px; }
+  .switch button { flex: 1; border: 0; background: transparent; padding: 9px 8px; min-height: 40px; border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--muted); font-size: 14.5px; white-space: nowrap; }
+  .switch button[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 2px rgba(16,24,40,.12); }
+  .switch .n { font-size: 12px; font-weight: 600; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+  .switch .n:empty { display: none; }
+  .ob-top { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 14px; }
+  .ob-top .big { font: 700 18px/1.3 var(--display); }
+  .ring-row { display: flex; align-items: center; gap: 16px; }
+  .ring { width: 76px; height: 76px; flex: none; }
+  .ring .trk { stroke: var(--surface-2); } .ring .val { stroke: var(--accent); transition: stroke-dasharray .3s; }
+  .ring text { fill: var(--fg); font: 700 16px var(--body); }
+  .next { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .next .lbl { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: block; }
+  .next b { font-weight: 600; }
   .ob-phase { display: grid; gap: 8px; margin-top: 14px; }
   .ob-phase h3 { font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0; font-weight: 600; }
   .ob-task { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); cursor: pointer; }
-  .ob-task.late { border-color: var(--late); }
-  .ob-task input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--ok); flex: none; cursor: pointer; }
+  .ob-task.late { border-color: color-mix(in srgb, var(--late) 45%, var(--line)); }
+  .ob-task input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--accent); flex: none; cursor: pointer; }
   .ob-task .tn { font-weight: 500; overflow-wrap: anywhere; }
   .ob-task.done .tn { color: var(--muted); text-decoration: line-through; }
   .ob-task .tm { font: 12.5px/1.5 var(--mono); color: var(--muted); }
@@ -167,6 +180,10 @@
 </style>
 </head>
 <body>
+<div class="topbar"><div class="in">
+  <div class="brand"><span class="mark" id="brandMark" aria-hidden="true"></span><span id="brandName"></span></div>
+  <span class="av" id="meAv" aria-hidden="true"></span>
+</div></div>
 <div class="wrap">
   <header>
     <div class="eyebrow" id="eyebrow">My trainings</div>
@@ -221,7 +238,9 @@ function line(t) {
 // ---------- home ----------
 function renderHome() {
   if (!data) return;
-  $("hello").textContent = `Hi ${data.person.name.split(" ")[0]}`;
+  const h = new Date().getHours();
+  $("hello").textContent = `${h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"}, ${data.person.name.split(" ")[0]}`;
+  $("meAv").textContent = data.person.name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("");
   $("role").innerHTML = esc(data.person.role || "") + (data.person.isManager ? `${data.person.role ? " · " : ""}<a href="/?key=${encodeURIComponent(key)}">Open the manager portal</a>` : "");
   const list = [...data.trainings].sort((a, b) => RANK[a.status] - RANK[b.status] || (a.due || "9").localeCompare(b.due || "9") || a.name.localeCompare(b.name));
   $("nTodo").textContent = list.filter(t => ACTIONABLE.has(t.status)).length;
@@ -268,11 +287,22 @@ function renderOnboarding() {
   const { mine, hr } = ob;
   const pct = mine.total ? Math.round(mine.done / mine.total * 100) : 0;
   const phases = [...new Set(ob.tasks.map(t => t.phase || "Other"))];
+  const nextT = ob.tasks.filter(t => !t.doneOn).sort((a, b) => (a.due || "9").localeCompare(b.due || "9"))[0];
   el.innerHTML = `
     <div class="ob-top">
-      <div class="big">${mine.done === mine.total ? "You've finished your onboarding checklist 🎉" : `${mine.done} of ${mine.total} done`}</div>
-      <div class="bar"><i style="width:${pct}%"></i></div>
-      <div class="note">${ob.hireDate ? `Your start date: ${fmt(ob.hireDate)}. ` : ""}${mine.late ? `<b style="color:var(--late)">${mine.late} overdue.</b> ` : ""}Tap a task for its details, tick it when it's done.${hr.total ? ` HR has finished ${hr.done} of ${hr.total} things on their side.` : ""}</div>
+      <div class="ring-row">
+        <svg class="ring" viewBox="0 0 76 76" role="img" aria-label="${pct}% of your onboarding done">
+          <circle class="trk" cx="38" cy="38" r="32" fill="none" stroke-width="8"></circle>
+          ${pct ? "" : "<!--"}<circle class="val" cx="38" cy="38" r="32" fill="none" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(pct / 100 * 201).toFixed(1)} 201" transform="rotate(-90 38 38)"></circle>${pct ? "" : "-->"}
+          <text x="38" y="43" text-anchor="middle">${pct}%</text>
+        </svg>
+        <div style="display:grid;gap:2px">
+          <div class="big">${mine.done === mine.total ? "You've finished your onboarding checklist" : `${mine.done} of ${mine.total} tasks done`}</div>
+          ${mine.late ? `<div style="color:var(--late);font-weight:600;font-size:14px">${mine.late} overdue</div>` : ""}
+          <div class="note" style="font-size:13px">${ob.hireDate ? `Start date ${fmt(ob.hireDate)}` : ""}${hr.total ? `${ob.hireDate ? " · " : ""}HR has done ${hr.done} of ${hr.total} on their side` : ""}</div>
+        </div>
+      </div>
+      ${nextT ? `<div class="next"><span><span class="lbl">Next up</span><b>${esc(nextT.name)}</b></span>${nextT.due ? `<span class="pill ${nextT.state === "late" ? "k-late" : "k-missing"}">${nextT.state === "late" ? "Was due" : "Due"} ${fmt(nextT.due)}</span>` : ""}</div>` : ""}
     </div>
     ${phases.map(ph => `<div class="ob-phase"><h3>${esc(ph)}</h3>${ob.tasks.filter(t => (t.phase || "Other") === ph).map(t => `
       <div class="ob-task${t.doneOn ? " done" : ""}${!t.doneOn && t.state === "late" ? " late" : ""}">
@@ -578,6 +608,17 @@ document.addEventListener("click", (e) => {
 });
 document.addEventListener("change", (e) => { if (e.target.matches("[data-ob]")) tickOb(e.target); });
 
+async function loadBrand() {
+  try {
+    const r = await fetch("/api/brand"); if (!r.ok) return;
+    const b = await r.json();
+    if (b.color) document.documentElement.style.setProperty("--brand", b.color);
+    $("brandName").textContent = b.name;
+    document.title = `${b.name} · My portal`;
+    if (b.logo) $("brandMark").innerHTML = `<img src="${esc(b.logo)}" alt="">`; else $("brandMark").textContent = b.name.trim()[0] || "";
+  } catch {}
+}
+loadBrand();
 loadHome();
 loadOnboarding();
 setInterval(() => { if (!away && document.visibilityState === "visible") { loadHome(); loadOnboarding(); } }, 120000);

@@ -99,3 +99,13 @@ Flow: set Employment Status = Onboarding + Hire Date + Onboarding Manager → da
 `/notion.html?key=<Link Key>` — the Notion Setup Training Library as a portal: Loom videos, written steps, and "Mark as watched".
 Turned on with `NOTION_TRAINING_DB` (Training Library) and `NOTION_TRAINING_DONE_DB` (Notion Training Completions).
 Shows videos with Status "Published", plus "Recorded" / "In progress" ones that have a video link. Phase 2 and unrecorded videos stay hidden.
+
+## Branding (per client)
+
+Set these in the hosting settings (Cloudflare: Worker → Settings → Variables). None are secret.
+
+| Variable | Example | What it does |
+|---|---|---|
+| `BRAND_NAME` | `Solenne Studio` | Name in the sidebar, the employee view and the browser tab |
+| `BRAND_COLOR` | `#0E6E55` | Main colour: buttons, selected menu item, progress bars. Default is forest green |
+| `BRAND_LOGO` | `https://…/logo.png` | Optional square logo. Without it the first letter of the name is shown |

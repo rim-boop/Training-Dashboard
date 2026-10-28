@@ -12,12 +12,14 @@ import dashboard from "../api/dashboard.js";
 import me from "../api/me.js";
 import onboarding from "../api/onboarding.js";
 import notionTraining from "../api/notion-training.js";
+import brand from "../api/brand.js";
 
 const ROUTES = {
   dashboard,
   me,
   onboarding,
   "notion-training": notionTraining,
+  brand,
 };
 
 export default {
