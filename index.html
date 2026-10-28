@@ -130,7 +130,7 @@
   .mx th, .mx td { border-bottom: 1px solid var(--line); }
   .mx thead th { vertical-align: bottom; padding: 0 6px 12px; background: var(--surface); font-weight: 500; }
   .mx thead th.col { width: 52px; min-width: 52px; }
-  .mx thead th.col span { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; font-size: 12px; color: var(--muted); display: inline-block; max-height: 170px; overflow: hidden; text-overflow: ellipsis; }
+  .mx thead th.col span { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; font-size: 12px; color: var(--muted); display: inline-block; max-height: 260px; overflow: hidden; text-overflow: ellipsis; }
   .mx td { padding: 10px 6px; text-align: center; }
   .mx td.who { text-align: left; padding-left: 20px; min-width: 220px; position: sticky; left: 0; background: var(--surface); }
   .mx td.pc, .mx th.pc { text-align: right; padding-left: 20px; padding-right: 20px; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -400,7 +400,7 @@ function detail(c) {
 // ---------- views ----------
 function viewOverview(m) {
   const n = m.staff.length;
-  const full = m.perStaff.filter(p => p.total > 0 && p.ok === p.total).length;
+  const full = m.perStaff.filter(p => p.total > 0 && p.ok + p.soon === p.total).length;
   const attention = m.perStaff.filter(p => p.late + p.missing + p.retake + p.update > 0).length;
   const soon = m.items.filter(i => i.status === "soon").length;
   const late = m.items.filter(i => i.status === "late").length;
