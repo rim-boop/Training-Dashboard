@@ -263,7 +263,8 @@ function obLine(t) {
 }
 function renderOnboarding() {
   const el = $("onboard");
-  if (!ob || !ob.tasks.length) { el.innerHTML = ""; return; }
+  if (!ob) { el.innerHTML = ""; return; }
+  if (!ob.tasks.length) { el.innerHTML = `<div class="ob-top"><div class="big">Your onboarding checklist isn't ready yet</div><div class="note">${ob.hireDate ? `Your start date: ${fmt(ob.hireDate)}. ` : ""}Your onboarding manager sets it up before you start. Your tasks will appear here.</div></div>`; return; }
   const { mine, hr } = ob;
   const pct = mine.total ? Math.round(mine.done / mine.total * 100) : 0;
   const phases = [...new Set(ob.tasks.map(t => t.phase || "Other"))];
@@ -281,13 +282,13 @@ function renderOnboarding() {
       </div>`).join("")}</div>`).join("")}`;
 }
 function applyView() {
-  const hasOb = !!(ob && ob.tasks.length);
+  const hasOb = !!(ob && (ob.tasks.length || ob.status === "Onboarding"));
   $("switch").hidden = !hasOb || away;
-  if (hasOb && !view) view = ob.mine.done < ob.mine.total ? "onboarding" : "trainings";
+  if (hasOb && !view) view = (!ob.mine.total || ob.mine.done < ob.mine.total) ? "onboarding" : "trainings";
   const cur = hasOb ? view : "trainings";
   document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === cur)));
   if (hasOb) {
-    $("swOb").textContent = `${ob.mine.done}/${ob.mine.total}`;
+    $("swOb").textContent = ob.mine.total ? `${ob.mine.done}/${ob.mine.total}` : "";
     $("swTr").textContent = data ? String(data.trainings.filter(t => ACTIONABLE.has(t.status)).length || "") : "";
   }
   if (away) { $("onboard").hidden = true; $("home").hidden = true; return; }
