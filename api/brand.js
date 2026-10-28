@@ -13,6 +13,6 @@ export default function handler(req, res) {
   const name = (process.env.BRAND_NAME || "").trim().slice(0, 60) || "Team portal";
   const color = HEX.test((process.env.BRAND_COLOR || "").trim()) ? process.env.BRAND_COLOR.trim() : "#0E6E55";
   const logo = /^https:\/\/\S+$/.test((process.env.BRAND_LOGO || "").trim()) ? process.env.BRAND_LOGO.trim() : null;
-  res.setHeader("Cache-Control", "public, max-age=300");
+  res.setHeader("Cache-Control", "public, max-age=60");
   res.status(200).json({ name, color, logo });
 }
