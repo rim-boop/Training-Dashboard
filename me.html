@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>My Trainings</title>
+<title>My Portal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -176,8 +176,8 @@
   </header>
 
   <nav class="switch" id="switch" hidden aria-label="Sections">
-    <button type="button" data-view="onboarding" aria-pressed="false">Onboarding<span class="n" id="swOb"></span></button>
-    <button type="button" data-view="trainings" aria-pressed="true">Trainings<span class="n" id="swTr"></span></button>
+    <button type="button" data-view="onboarding" aria-pressed="false">My onboarding<span class="n" id="swOb"></span></button>
+    <button type="button" data-view="trainings" aria-pressed="true">My trainings<span class="n" id="swTr"></span></button>
   </nav>
 
   <section id="onboard" hidden></section>
@@ -222,7 +222,7 @@ function line(t) {
 function renderHome() {
   if (!data) return;
   $("hello").textContent = `Hi ${data.person.name.split(" ")[0]}`;
-  $("role").innerHTML = esc(data.person.role || "") + (data.person.isManager ? `${data.person.role ? " · " : ""}<a href="/?key=${encodeURIComponent(key)}">Open the manager dashboard</a> · <a href="/notion.html?key=${encodeURIComponent(key)}">Notion training</a>` : "");
+  $("role").innerHTML = esc(data.person.role || "") + (data.person.isManager ? `${data.person.role ? " · " : ""}<a href="/?key=${encodeURIComponent(key)}">Open the manager portal</a>` : "");
   const list = [...data.trainings].sort((a, b) => RANK[a.status] - RANK[b.status] || (a.due || "9").localeCompare(b.due || "9") || a.name.localeCompare(b.name));
   $("nTodo").textContent = list.filter(t => ACTIONABLE.has(t.status)).length;
   $("nWait").textContent = list.filter(t => t.status === "signoff").length;

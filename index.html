@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<title>Training Compliance Dashboard</title>
+<title>Training &amp; Onboarding Portal</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -80,6 +80,9 @@
 
   /* Tabs */
   .tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; justify-self: start; max-width: 100%; }
+  .tabgroups { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-end; }
+  .tgroup { display: grid; gap: 6px; min-width: 0; max-width: 100%; }
+  .glabel { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding-left: 4px; }
   .tab { border: 0; background: transparent; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 500; color: var(--muted); white-space: nowrap; }
   .tab[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
 
@@ -242,19 +245,29 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h13"/></svg>
     </div>
     <div>
-      <h1>Training Compliance Dashboard</h1>
-      <p>Every staff member's training, sign-offs and onboarding, read live from Notion.</p>
+      <h1>Training &amp; Onboarding Portal</h1>
+      <p>Staff training, sign-offs and new-hire onboarding in one place, read live from Notion.</p>
       <div class="fresh" id="fresh"><span class="dot warn" id="dot"></span><span id="freshText">Loading from Notion…</span></div>
       <div class="who" id="who" hidden></div>
     </div>
   </header>
 
-  <nav class="tabs" role="tablist" aria-label="Views">
-    <button class="tab" role="tab" id="tab-overview" data-tab="overview" aria-selected="true">Overview</button>
-    <button class="tab" role="tab" id="tab-employees" data-tab="employees" aria-selected="false">By Employee</button>
-    <button class="tab" role="tab" id="tab-trainings" data-tab="trainings" aria-selected="false">By Training</button>
-    <button class="tab" role="tab" id="tab-calendar" data-tab="calendar" aria-selected="false">Calendar</button>
-    <button class="tab" role="tab" id="tab-onboarding" data-tab="onboarding" aria-selected="false" hidden>Onboarding</button>
+  <nav class="tabgroups" aria-label="Views">
+    <div class="tgroup">
+      <span class="glabel">Training</span>
+      <div class="tabs" role="tablist" aria-label="Training">
+        <button class="tab" role="tab" id="tab-overview" data-tab="overview" aria-selected="true">Overview</button>
+        <button class="tab" role="tab" id="tab-employees" data-tab="employees" aria-selected="false">By Employee</button>
+        <button class="tab" role="tab" id="tab-trainings" data-tab="trainings" aria-selected="false">By Training</button>
+        <button class="tab" role="tab" id="tab-calendar" data-tab="calendar" aria-selected="false">Calendar</button>
+      </div>
+    </div>
+    <div class="tgroup" id="grp-onboarding" hidden>
+      <span class="glabel">Onboarding</span>
+      <div class="tabs" role="tablist" aria-label="Onboarding">
+        <button class="tab" role="tab" id="tab-onboarding" data-tab="onboarding" aria-selected="false">New hires</button>
+      </div>
+    </div>
   </nav>
 
   <main id="view" class="view" aria-live="polite">
@@ -844,7 +857,7 @@ function passwordForm(wrong) {
 function accept(data) {
   state.data = data;
   state.model = compute(data);
-  $("tab-onboarding").hidden = !data.onboarding;
+  $("grp-onboarding").hidden = !data.onboarding;
   if (!data.onboarding && state.tab === "onboarding") state.tab = "overview";
   if (state.tab === "onboarding" && !Object.keys(state.onbBusy).length && !state.onbStarting) loadOnboarding();
   render();
@@ -866,7 +879,7 @@ async function load() {
     accept(body);
     const who = $("who"); who.hidden = false;
     who.innerHTML = body.me
-      ? `Signed in as <b>${esc(body.me.name)}</b> · <a href="/me.html?key=${encodeURIComponent(state.key)}">My own trainings</a> · <a href="/notion.html?key=${encodeURIComponent(state.key)}">Notion training</a>`
+      ? `Signed in as <b>${esc(body.me.name)}</b> · <a href="/me.html?key=${encodeURIComponent(state.key)}">My own view</a>`
       : "View only · open your Manager Link to sign off trainings";
     setFresh("ok", `Live from Notion · updated ${esc(new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }))} · refreshes every minute`);
   } catch (err) {
